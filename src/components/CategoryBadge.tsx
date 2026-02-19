@@ -1,5 +1,5 @@
+import { Category } from "@/generated/prisma/enums";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/data/events";
 
 const styles: Record<Category, string> = {
   Tech: "bg-blue-500/15 text-blue-400 border-blue-500/20",

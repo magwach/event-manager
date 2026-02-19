@@ -11,6 +11,9 @@ export interface Event {
   location: string;
   organizer: string;
   image: string;
+  price: number;
+  capacity: number;
+  remainingCapacity: number;
 }
 
 export const EVENTS: Event[] = [
@@ -25,6 +28,9 @@ export const EVENTS: Event[] = [
     location: "Nairobi Garage, Westlands, Nairobi",
     organizer: "DevKE Community",
     image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80",
+    price: 2500,
+    capacity: 200,
+    remainingCapacity: 43,
   },
   {
     id: "2",
@@ -37,6 +43,9 @@ export const EVENTS: Event[] = [
     location: "Nyayo National Stadium, Nairobi",
     organizer: "Athletics Kenya",
     image: "https://images.unsplash.com/photo-1593079831268-3381b0db4a77?w=800&q=80",
+    price: 2000,
+    capacity: 5000,
+    remainingCapacity: 1872,
   },
   {
     id: "3",
@@ -49,6 +58,9 @@ export const EVENTS: Event[] = [
     location: "iHub, Kilimani, Nairobi",
     organizer: "DataScience Africa",
     image: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800&q=80",
+    price: 5000,
+    capacity: 80,
+    remainingCapacity: 5,
   },
   {
     id: "4",
@@ -61,6 +73,9 @@ export const EVENTS: Event[] = [
     location: "The Rooftop, Ole Sereni Hotel, Nairobi",
     organizer: "Young Professionals KE",
     image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80",
+    price: 3500,
+    capacity: 100,
+    remainingCapacity: 0,
   },
   {
     id: "5",
@@ -73,18 +88,24 @@ export const EVENTS: Event[] = [
     location: "KEPSA, Upper Hill, Nairobi",
     organizer: "Open Source Africa",
     image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80",
+    price: 1500,
+    capacity: 350,
+    remainingCapacity: 210,
   },
   {
     id: "6",
     title: "University Research Symposium",
     description: "Graduate students and researchers present cutting-edge findings across science, technology, and humanities.",
-    fullDescription: "The Annual University Research Symposium showcases the best graduate-level research across disciplines including STEM, social sciences, environmental studies, and the humanities. Attendees can visit poster sessions, attend 20-minute research talks, and engage with faculty panelists. Open to students, researchers, and the general public. Great opportunity to discover emerging ideas and connect with future leaders.",
+    fullDescription: "The Annual University Research Symposium showcases the best graduate-level research across disciplines including STEM, social sciences, environmental studies, and the humanities. Attendees can visit poster sessions, attend 20-minute research talks, and engage with faculty panelists. Open to students, researchers, and the general public.",
     date: "2025-06-10",
     time: "9:00 AM – 4:00 PM",
     category: "Academic",
     location: "University of Nairobi, Main Campus",
     organizer: "UoN Graduate School",
     image: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=800&q=80",
+    price: 0,
+    capacity: 500,
+    remainingCapacity: 312,
   },
   {
     id: "7",
@@ -97,6 +118,9 @@ export const EVENTS: Event[] = [
     location: "Karura Forest, Nairobi",
     organizer: "Taste of Nairobi",
     image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80",
+    price: 800,
+    capacity: 2000,
+    remainingCapacity: 648,
   },
   {
     id: "8",
@@ -109,5 +133,8 @@ export const EVENTS: Event[] = [
     location: "Kasarani Sports Complex, Nairobi",
     organizer: "KE Sports League",
     image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80",
+    price: 1200,
+    capacity: 320,
+    remainingCapacity: 160,
   },
 ];

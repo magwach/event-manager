@@ -20,24 +20,29 @@ import { formatDate, isUpcoming } from "@/lib/utils";
 import { mockUser } from "@/data/users";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useGetUserProfile } from "@/hooks/use-users";
+import { ProfileSkeleton } from "@/components/ProfileLoader";
 
 export default function ProfilePage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
 
-  const profile = mockUser;
+  const { data: profile, isLoading } = useGetUserProfile();
 
-  const upcomingCount = profile.bookedEvents.filter((b: any) =>
-    isUpcoming(b.event.date.toString()),
-  ).length;
-  const pastCount = profile.bookedEvents.length - upcomingCount;
-  const totalSpent = profile.bookedEvents.reduce(
-    (sum: number, b: any) => sum + b.event.price,
-    0,
-  );
+  const upcomingCount =
+    profile?.bookedEvents.filter((b: any) =>
+      isUpcoming(b.event.date.toString()),
+    ).length ?? 0;
+  const bookedEvents = profile?.bookedEvents?.length ?? 0;
+  const pastCount = bookedEvents - upcomingCount;
+  const totalSpent =
+    profile?.bookedEvents.reduce(
+      (sum: number, b: any) => sum + b.event.price,
+      0,
+    ) ?? 0;
 
   const initials =
-    `${profile.firstName?.[0] ?? ""}${profile.lastName?.[0] ?? ""}`.toUpperCase() ||
+    `${profile?.firstName?.[0] ?? ""}${profile?.lastName?.[0] ?? ""}`.toUpperCase() ||
     "U";
 
   useEffect(() => {
@@ -45,6 +50,8 @@ export default function ProfilePage() {
       router.replace("/");
     }
   }, [isLoaded, user, router]);
+
+  if (isLoading) return <ProfileSkeleton />;
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
@@ -56,11 +63,11 @@ export default function ProfilePage() {
         <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-6">
           {/* Avatar */}
           <div className="relative shrink-0">
-            {profile.profileImage ? (
+            {profile?.profileImage ? (
               <div className="relative h-20 w-20 rounded-2xl overflow-hidden ring-2 ring-amber-500/30">
                 <Image
-                  src={profile.profileImage}
-                  alt={profile.firstName ?? "User"}
+                  src={profile?.profileImage ?? ""}
+                  alt={profile?.firstName ?? "User"}
                   fill
                   className="object-cover"
                 />
@@ -79,27 +86,32 @@ export default function ProfilePage() {
           {/* Info */}
           <div className="flex-1 min-w-0">
             <h1 className="font-syne text-2xl font-bold text-[#e8e6e1] mb-1">
-              {profile.firstName} {profile.lastName}
+              {profile?.firstName} {profile?.lastName}
             </h1>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#7c7a76]">
               <span className="flex items-center gap-1.5">
                 <Mail className="h-3.5 w-3.5 text-amber-500/60" />
-                {profile.email}
+                {profile?.email}
               </span>
-              {profile.phone && (
-                <span className="flex items-center gap-1.5">
-                  <Phone className="h-3.5 w-3.5 text-amber-500/60" />
-                  {profile.phone}
-                </span>
-              )}
+              <span className="flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5 text-amber-500/60" />
+                {profile?.phone ? (
+                  profile?.phone
+                ) : (
+                  <span className="text-[#7c7a76] italic">No phone number</span>
+                )}
+              </span>
+
               <span className="flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5 text-amber-500/60" />
                 Member since{" "}
-                {new Date(profile.createdAt).toLocaleDateString("en-KE", {
-                  month: "long",
-                  year: "numeric",
-                })}
+                {profile?.createdAt
+                  ? new Date(profile?.createdAt).toLocaleDateString("en-KE", {
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "Unknown"}
               </span>
             </div>
           </div>
@@ -119,7 +131,7 @@ export default function ProfilePage() {
       <div className="grid grid-cols-3 gap-4 mb-10">
         <StatCard
           label="Total Bookings"
-          value={profile.bookedEvents.length}
+          value={profile?.bookedEvents?.length ?? 0}
           icon={Ticket}
           suffix="events"
         />
@@ -145,7 +157,7 @@ export default function ProfilePage() {
             Your Booked Events
           </h2>
           <span className="rounded-full bg-[#2a2a35] px-2 py-0.5 text-xs text-[#7c7a76]">
-            {profile.bookedEvents.length}
+            {profile?.bookedEvents?.length ?? 0}
           </span>
         </div>
         <div className="text-xs text-[#4a4a52]">
@@ -153,11 +165,11 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {profile.bookedEvents.length === 0 ? (
+      {profile?.bookedEvents?.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
-          {profile.bookedEvents.map((booking: any) => (
+          {profile?.bookedEvents?.map((booking: any) => (
             <BookedEventCard key={booking.id} booking={booking} />
           ))}
         </div>

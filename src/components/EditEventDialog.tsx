@@ -1,54 +1,73 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus, ImageIcon, X, Upload, Loader2 } from "lucide-react";
+import { Pencil, ImageIcon, X, Upload, Loader2 } from "lucide-react";
 import { Category, Event } from "@/generated/prisma/client";
 
 interface Props {
-  onAdd: (event: Event) => void;
+  event: Event;
+  onSave: (updated: Event) => void;
 }
 
 const CATEGORIES: Category[] = ["Tech", "Sports", "Academic", "Social"];
 
-const DEFAULT_FORM = {
-  title: "",
-  description: "",
-  fullDescription: "",
-  category: "Tech" as Category,
-  date: "",
-  time: "",          // "HH:MM" — combined with date into a DateTime on submit
-  location: "",
-  organizer: "",
-  price: "",
-  capacity: "",
-};
-
-const DEFAULT_IMAGE =
-  "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80";
-
-export function AddEventDialog({ onAdd }: Props) {
+export function EditEventDialog({ event, onSave }: Props) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(DEFAULT_FORM);
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // Pre-fill form from the event being edited
+  const [form, setForm] = useState({
+    title: event.title,
+    description: event.description,
+    fullDescription: event.fullDescription,
+    category: event.category as Category,
+    date: event.date.toISOString().split("T")[0],
+    time: event.time,
+    location: event.location,
+    organizer: event.organizer,
+    price: String(event.price),
+    capacity: String(event.capacity),
+    remainingCapacity: String(event.remainingCapacity),
+  });
+
+  // Image — start from the current event image
+  const [imagePreview, setImagePreview] = useState<string>(event.image);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function set(field: keyof typeof DEFAULT_FORM, value: string) {
+  // Re-sync form if the event prop changes (e.g. parent re-renders)
+  useEffect(() => {
+    if (!open) {
+      setForm({
+        title: event.title,
+        description: event.description,
+        fullDescription: event.fullDescription,
+        category: event.category,
+        date: event.date.toISOString().split("T")[0],
+        time: event.time,
+        location: event.location,
+        organizer: event.organizer,
+        price: String(event.price),
+        capacity: String(event.capacity),
+        remainingCapacity: String(event.remainingCapacity),
+      });
+      setImagePreview(event.image);
+      setImageFile(null);
+    }
+  }, [event, open]);
+
+  function set(field: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
   function handleClose() {
     setOpen(false);
-    setForm(DEFAULT_FORM);
-    setImagePreview(null);
     setImageFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  // ── Image upload ─────────────────────────────────────────────────────────
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -77,88 +96,107 @@ export function AddEventDialog({ onAdd }: Props) {
     reader.readAsDataURL(file);
   }
 
-  function handleRemoveImage() {
-    setImagePreview(null);
+  function handleResetImage() {
+    setImagePreview(event.image);
     setImageFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  // ── Submit ───────────────────────────────────────────────────────────────
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!form.title.trim()) return toast.error("Title is required.");
-    if (!form.description.trim()) return toast.error("Short description is required.");
-    if (!form.fullDescription.trim()) return toast.error("Full description is required.");
+    if (!form.description.trim())
+      return toast.error("Short description is required.");
+    if (!form.fullDescription.trim())
+      return toast.error("Full description is required.");
     if (!form.date) return toast.error("Date is required.");
-    if (!form.time) return toast.error("Start time is required.");
     if (!form.location.trim()) return toast.error("Location is required.");
     if (!form.organizer.trim()) return toast.error("Organizer is required.");
 
     const price = parseInt(form.price, 10);
     const capacity = parseInt(form.capacity, 10);
+    const remainingCapacity = parseInt(form.remainingCapacity, 10);
 
-    if (!form.price || isNaN(price) || price < 0)
+    if (isNaN(price) || price < 0)
       return toast.error("Enter a valid price (0 or more).");
-    if (!form.capacity || isNaN(capacity) || capacity < 1)
+    if (isNaN(capacity) || capacity < 1)
       return toast.error("Capacity must be at least 1.");
+    if (isNaN(remainingCapacity) || remainingCapacity < 0)
+      return toast.error("Remaining capacity cannot be negative.");
+    if (remainingCapacity > capacity)
+      return toast.error("Remaining capacity cannot exceed total capacity.");
 
-    // Merge date + time strings into a proper DateTime object for the `time` field
-    // e.g. "2025-09-15" + "09:00" → new Date("2025-09-15T09:00:00")
-    const timeAsDateTime = new Date(`${form.date}T${form.time}:00`);
-
-    const newEvent: Event = {
-      id: `evt-${Date.now()}`,
+    const updated: Event = {
+      ...event,
       title: form.title.trim(),
       description: form.description.trim(),
       fullDescription: form.fullDescription.trim(),
       category: form.category,
       date: new Date(form.date),
-      time: timeAsDateTime,
+      time: form.time,
       location: form.location.trim(),
       organizer: form.organizer.trim(),
-      image: imagePreview ?? DEFAULT_IMAGE,
+      image: imagePreview,
       price,
       capacity,
-      remainingCapacity: capacity, // fully available on creation
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      remainingCapacity,
     };
 
-    onAdd(newEvent);
-    toast.success("Event added successfully 🎉");
+    onSave(updated);
+    toast.success("Event updated successfully ");
     handleClose();
   }
 
   const inputClass =
     "w-full rounded-xl bg-[#0f0f11] border border-[#2a2a35] px-3 py-2.5 text-sm text-[#e8e6e1] placeholder:text-[#4a4a52] focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all";
 
-  const labelClass = "text-xs font-medium text-[#7c7a76] uppercase tracking-wider";
+  const labelClass =
+    "text-xs font-medium text-[#7c7a76] uppercase tracking-wider";
+
+  const bookedCount = event.capacity - event.remainingCapacity;
+  const fillPct = Math.round((bookedCount / event.capacity) * 100);
 
   return (
     <>
-      {/* Trigger */}
+      {/* Trigger — compact edit button for the table row */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 px-5 py-2.5 text-sm font-semibold text-[#0f0f11] transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2a35] bg-transparent px-3 py-1.5 text-xs font-medium text-[#7c7a76] hover:bg-amber-500/10 hover:border-amber-500/30 hover:text-amber-400 transition-all"
+        title="Edit event"
       >
-        <Plus className="h-4 w-4" />
-        Add Event
+        <Pencil className="h-3.5 w-3.5" />
+        Edit
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={handleClose}
           />
 
+          {/* Dialog */}
           <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-[#2a2a35] bg-[#16161a] shadow-2xl animate-fade-in flex flex-col max-h-[90vh]">
-
             {/* Header */}
             <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-[#2a2a35] shrink-0">
               <div>
-                <h2 className="font-syne text-xl font-bold text-[#e8e6e1]">Add New Event</h2>
-                <p className="mt-1 text-sm text-[#7c7a76]">Fill in all details to publish a new event.</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/15">
+                    <Pencil className="h-3.5 w-3.5 text-amber-400" />
+                  </div>
+                  <h2 className="font-syne text-xl font-bold text-[#e8e6e1]">
+                    Edit Event
+                  </h2>
+                </div>
+                <p className="text-sm text-[#7c7a76] truncate max-w-sm">
+                  Editing:{" "}
+                  <span className="text-amber-400/80 font-medium">
+                    {event.title}
+                  </span>
+                </p>
               </div>
               <button
                 onClick={handleClose}
@@ -168,7 +206,28 @@ export function AddEventDialog({ onAdd }: Props) {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="overflow-y-auto px-6 py-5 space-y-5">
+            {/* Scrollable form */}
+            <form
+              onSubmit={handleSubmit}
+              className="overflow-y-auto px-6 py-5 space-y-5"
+            >
+              {/* ── Current capacity snapshot ── */}
+              <div className="rounded-xl border border-[#2a2a35] bg-[#0f0f11] px-4 py-3 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#7c7a76]">Current fill rate</span>
+                  <span
+                    className={`font-semibold ${fillPct >= 90 ? "text-rose-400" : fillPct >= 60 ? "text-amber-400" : "text-green-400"}`}
+                  >
+                    {bookedCount} / {event.capacity} booked ({fillPct}%)
+                  </span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-[#2a2a35] overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${fillPct >= 90 ? "bg-rose-500" : fillPct >= 60 ? "bg-amber-500" : "bg-green-500"}`}
+                    style={{ width: `${fillPct}%` }}
+                  />
+                </div>
+              </div>
 
               {/* Title */}
               <div className="space-y-1.5">
@@ -177,7 +236,6 @@ export function AddEventDialog({ onAdd }: Props) {
                 </label>
                 <input
                   className={inputClass}
-                  placeholder="e.g. Web Dev Conference 2025"
                   value={form.title}
                   onChange={(e) => set("title", e.target.value)}
                 />
@@ -190,7 +248,6 @@ export function AddEventDialog({ onAdd }: Props) {
                 </label>
                 <textarea
                   className={`${inputClass} resize-none h-20`}
-                  placeholder="One or two sentences shown on the event card..."
                   value={form.description}
                   onChange={(e) => set("description", e.target.value)}
                 />
@@ -203,14 +260,13 @@ export function AddEventDialog({ onAdd }: Props) {
                 </label>
                 <textarea
                   className={`${inputClass} resize-none h-28`}
-                  placeholder="Detailed description shown on the event details page..."
                   value={form.fullDescription}
                   onChange={(e) => set("fullDescription", e.target.value)}
                 />
               </div>
 
-              {/* ── Category + Date + Time — three equal columns ── */}
-              <div className="grid grid-cols-3 gap-3">
+              {/* Category + Date */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className={labelClass}>Category</label>
                   <select
@@ -225,7 +281,6 @@ export function AddEventDialog({ onAdd }: Props) {
                     ))}
                   </select>
                 </div>
-
                 <div className="space-y-1.5">
                   <label className={labelClass}>
                     Date <span className="text-amber-500">*</span>
@@ -237,28 +292,21 @@ export function AddEventDialog({ onAdd }: Props) {
                     onChange={(e) => set("date", e.target.value)}
                   />
                 </div>
-
-                {/* ── NEW: Start time ── */}
-                <div className="space-y-1.5">
-                  <label className={labelClass}>
-                    Start Time <span className="text-amber-500">*</span>
-                  </label>
-                  <input
-                    type="time"
-                    className={inputClass}
-                    value={form.time}
-                    onChange={(e) => set("time", e.target.value)}
-                  />
-                </div>
               </div>
 
-              {/* hint under the row */}
-              <p className="text-[10px] text-[#4a4a52] -mt-3">
-                Time is stored as a full DateTime — date and time are combined on submit.
-              </p>
+              {/* Time */}
+              <div className="space-y-1.5">
+                <label className={labelClass}>Time</label>
+                <input
+                  className={inputClass}
+                  placeholder="e.g. 9:00 AM – 6:00 PM"
+                  value={form.time.toISOString().split("T")[0]}
+                  onChange={(e) => set("time", e.target.value)}
+                />
+              </div>
 
-              {/* Price + Capacity */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Price + Capacity + Remaining */}
+              <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <label className={labelClass}>
                     Price (KES) <span className="text-amber-500">*</span>
@@ -271,14 +319,11 @@ export function AddEventDialog({ onAdd }: Props) {
                       type="number"
                       min="0"
                       className={`${inputClass} pl-10`}
-                      placeholder="0"
                       value={form.price}
                       onChange={(e) => set("price", e.target.value)}
                     />
                   </div>
-                  <p className="text-[10px] text-[#4a4a52]">Enter 0 for free events</p>
                 </div>
-
                 <div className="space-y-1.5">
                   <label className={labelClass}>
                     Capacity <span className="text-amber-500">*</span>
@@ -287,15 +332,26 @@ export function AddEventDialog({ onAdd }: Props) {
                     type="number"
                     min="1"
                     className={inputClass}
-                    placeholder="e.g. 200"
                     value={form.capacity}
                     onChange={(e) => set("capacity", e.target.value)}
                   />
-                  <p className="text-[10px] text-[#4a4a52]">
-                    Max attendees · remaining capacity starts at full
-                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelClass}>
+                    Remaining <span className="text-amber-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    className={inputClass}
+                    value={form.remainingCapacity}
+                    onChange={(e) => set("remainingCapacity", e.target.value)}
+                  />
                 </div>
               </div>
+              <p className="text-[10px] text-[#4a4a52] -mt-3">
+                Remaining capacity cannot exceed total capacity.
+              </p>
 
               {/* Location + Organizer */}
               <div className="grid grid-cols-2 gap-3">
@@ -305,32 +361,28 @@ export function AddEventDialog({ onAdd }: Props) {
                   </label>
                   <input
                     className={inputClass}
-                    placeholder="e.g. Nairobi Garage, Westlands"
                     value={form.location}
                     onChange={(e) => set("location", e.target.value)}
                   />
                 </div>
-
                 <div className="space-y-1.5">
                   <label className={labelClass}>
                     Organizer <span className="text-amber-500">*</span>
                   </label>
                   <input
                     className={inputClass}
-                    placeholder="e.g. DevKE Community"
                     value={form.organizer}
                     onChange={(e) => set("organizer", e.target.value)}
                   />
                 </div>
               </div>
 
-              {/* Image Upload */}
+              {/* ── Image ── */}
               <div className="space-y-2">
                 <label className={labelClass}>
                   <span className="flex items-center gap-1.5">
                     <ImageIcon className="h-3 w-3" />
                     Event Image
-                    <span className="normal-case text-[#4a4a52] font-normal">(optional)</span>
                   </span>
                 </label>
 
@@ -342,65 +394,52 @@ export function AddEventDialog({ onAdd }: Props) {
                   onChange={handleImageChange}
                 />
 
-                {imagePreview ? (
-                  <div className="relative h-36 w-full overflow-hidden rounded-xl border border-[#2a2a35] group/preview">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* Always show current/new preview */}
+                <div className="relative h-36 w-full overflow-hidden rounded-xl border border-[#2a2a35] group/preview">
+                  {uploadingImage ? (
+                    <div className="flex h-full w-full items-center justify-center bg-[#0f0f11]">
+                      <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
+                    </div>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={imagePreview}
-                      alt="Event image preview"
+                      alt="Event preview"
                       className="h-full w-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f11]/70 to-transparent pointer-events-none" />
-                    <span className="absolute bottom-2 left-3 rounded-md bg-[#0f0f11]/80 px-2 py-0.5 text-[10px] text-[#7c7a76] max-w-[65%] truncate">
-                      {imageFile?.name}
-                    </span>
-                    <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover/preview:opacity-100 transition-opacity duration-200">
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f11]/70 to-transparent pointer-events-none" />
+
+                  {/* Source label */}
+                  <span className="absolute bottom-2 left-3 rounded-md bg-[#0f0f11]/80 px-2 py-0.5 text-[10px] text-[#7c7a76]">
+                    {imageFile ? imageFile.name : "Current image"}
+                  </span>
+
+                  {/* Hover actions */}
+                  <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover/preview:opacity-100 transition-opacity duration-200">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-1 rounded-lg bg-[#0f0f11]/80 hover:bg-amber-500/20 border border-[#2a2a35] hover:border-amber-500/30 px-2 py-1 text-[10px] text-[#7c7a76] hover:text-amber-400 transition-all"
+                    >
+                      <Upload className="h-3 w-3" />
+                      Replace
+                    </button>
+                    {imageFile && (
                       <button
                         type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-1 rounded-lg bg-[#0f0f11]/80 hover:bg-amber-500/20 border border-[#2a2a35] hover:border-amber-500/30 px-2 py-1 text-[10px] text-[#7c7a76] hover:text-amber-400 transition-all"
-                      >
-                        <Upload className="h-3 w-3" />
-                        Replace
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        className="flex items-center gap-1 rounded-lg bg-[#0f0f11]/80 hover:bg-rose-500/10 border border-[#2a2a35] hover:border-rose-500/30 px-2 py-1 text-[10px] text-[#7c7a76] hover:text-rose-400 transition-all"
+                        onClick={handleResetImage}
+                        className="flex items-center gap-1 rounded-lg bg-[#0f0f11]/80 hover:bg-[#2a2a35] border border-[#2a2a35] px-2 py-1 text-[10px] text-[#7c7a76] hover:text-[#e8e6e1] transition-all"
                       >
                         <X className="h-3 w-3" />
-                        Remove
+                        Restore
                       </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingImage}
-                    className="w-full rounded-xl border-2 border-dashed border-[#2a2a35] hover:border-amber-500/40 bg-[#0f0f11] hover:bg-amber-500/5 transition-all group/drop flex flex-col items-center justify-center gap-3 py-9 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {uploadingImage ? (
-                      <>
-                        <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
-                        <span className="text-xs text-[#7c7a76]">Reading image...</span>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1e1e24] border border-[#2a2a35] group-hover/drop:border-amber-500/30 group-hover/drop:bg-amber-500/10 transition-all">
-                          <Upload className="h-5 w-5 text-[#4a4a52] group-hover/drop:text-amber-400 transition-colors" />
-                        </div>
-                        <div className="text-center space-y-0.5">
-                          <p className="text-sm font-medium text-[#7c7a76] group-hover/drop:text-amber-400 transition-colors">
-                            Click to upload an image
-                          </p>
-                          <p className="text-xs text-[#4a4a52]">PNG, JPG, WEBP up to 5MB</p>
-                          <p className="text-[10px] text-[#4a4a52]">A default image is used if skipped</p>
-                        </div>
-                      </>
                     )}
-                  </button>
-                )}
+                  </div>
+                </div>
+                <p className="text-[10px] text-[#4a4a52]">
+                  Hover the image to replace it · PNG, JPG, WEBP up to 5MB
+                </p>
               </div>
 
               {/* Actions */}
@@ -414,9 +453,10 @@ export function AddEventDialog({ onAdd }: Props) {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-400 px-4 py-2.5 text-sm font-semibold text-[#0f0f11] transition-colors"
+                  className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-400 px-4 py-2.5 text-sm font-semibold text-[#0f0f11] transition-colors flex items-center justify-center gap-2"
                 >
-                  Add Event
+                  <Pencil className="h-4 w-4" />
+                  Save Changes
                 </button>
               </div>
             </form>

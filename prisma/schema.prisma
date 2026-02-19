@@ -16,7 +16,7 @@ datasource db {
 
 enum Category {
   Tech
-  Sport
+  Sports
   Academic
   Social
 }
@@ -38,32 +38,35 @@ model User {
 }
 
 model Event {
-  id              String         @id @default(cuid())
-  title           String         @unique
-  description     String         @unique
-  fullDescription String         @unique
-  date            DateTime
-  category        Category
-  location        String
-  organizer       String
-  image           String
-  price           Int
-  capacity        Int
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  bookedEvents    BookedEvents[]
+  id                String         @id @default(cuid())
+  title             String         @unique
+  description       String         @unique
+  fullDescription   String         @unique
+  date              DateTime
+  category          Category
+  location          String
+  organizer         String
+  image             String
+  time              DateTime
+  price             Int
+  capacity          Int
+  remainingCapacity Int
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  bookedEvents      BookedEvents[]
 
   @@map("events")
 }
 
 model BookedEvents {
-  id        String   @id @default(cuid())
-  userId    String
-  eventId   String
-  paymentId String
-  reciept   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  userId       String
+  eventId      String
+  paymentId    String
+  reciptNumber String
+  reciept      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
