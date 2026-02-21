@@ -4,10 +4,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Plus, ImageIcon, X, Upload, Loader2 } from "lucide-react";
 import { Category, Event } from "@/generated/prisma/client";
-
-interface Props {
-  onAdd: (event: Event) => void;
-}
+import { useAddEvent } from "@/hooks/use-events";
 
 const CATEGORIES: Category[] = ["Tech", "Sports", "Academic", "Social"];
 
@@ -17,17 +14,15 @@ const DEFAULT_FORM = {
   fullDescription: "",
   category: "Tech" as Category,
   date: "",
-  time: "",          // "HH:MM" — combined with date into a DateTime on submit
+  time: "",
+  duration: "",
   location: "",
   organizer: "",
   price: "",
   capacity: "",
 };
 
-const DEFAULT_IMAGE =
-  "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80";
-
-export function AddEventDialog({ onAdd }: Props) {
+export function AddEventDialog() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(DEFAULT_FORM);
 
@@ -36,6 +31,8 @@ export function AddEventDialog({ onAdd }: Props) {
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { mutate: addEvent, isPending } = useAddEvent();
 
   function set(field: keyof typeof DEFAULT_FORM, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -87,12 +84,22 @@ export function AddEventDialog({ onAdd }: Props) {
     e.preventDefault();
 
     if (!form.title.trim()) return toast.error("Title is required.");
-    if (!form.description.trim()) return toast.error("Short description is required.");
-    if (!form.fullDescription.trim()) return toast.error("Full description is required.");
+    if (!form.description.trim())
+      return toast.error("Short description is required.");
+    if (!form.fullDescription.trim())
+      return toast.error("Full description is required.");
     if (!form.date) return toast.error("Date is required.");
     if (!form.time) return toast.error("Start time is required.");
     if (!form.location.trim()) return toast.error("Location is required.");
     if (!form.organizer.trim()) return toast.error("Organizer is required.");
+    if (!imagePreview) return toast.error("Please upload an event image.");
+
+    if (!form.duration) return toast.error("Duration is required.");
+
+    const duration = parseInt(form.duration, 10);
+
+    if (isNaN(duration) || duration < 1)
+      return toast.error("Duration must be at least 1 minute.");
 
     const price = parseInt(form.price, 10);
     const capacity = parseInt(form.capacity, 10);
@@ -102,37 +109,61 @@ export function AddEventDialog({ onAdd }: Props) {
     if (!form.capacity || isNaN(capacity) || capacity < 1)
       return toast.error("Capacity must be at least 1.");
 
-    // Merge date + time strings into a proper DateTime object for the `time` field
-    // e.g. "2025-09-15" + "09:00" → new Date("2025-09-15T09:00:00")
     const timeAsDateTime = new Date(`${form.date}T${form.time}:00`);
 
-    const newEvent: Event = {
-      id: `evt-${Date.now()}`,
+    const newEvent: any = {
       title: form.title.trim(),
       description: form.description.trim(),
       fullDescription: form.fullDescription.trim(),
       category: form.category,
       date: new Date(form.date),
       time: timeAsDateTime,
+      duration,
       location: form.location.trim(),
       organizer: form.organizer.trim(),
-      image: imagePreview ?? DEFAULT_IMAGE,
+      image: imagePreview,
       price,
       capacity,
-      remainingCapacity: capacity, // fully available on creation
+      remainingCapacity: capacity,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    onAdd(newEvent);
-    toast.success("Event added successfully 🎉");
-    handleClose();
+    addEvent(
+      {
+        title: newEvent.title,
+        description: newEvent.description,
+        fullDescription: newEvent.fullDescription,
+        date: newEvent.date,
+        category: newEvent.category,
+        location: newEvent.location,
+        organizer: newEvent.organizer,
+        image: newEvent.image,
+        time: newEvent.time,
+        duration: newEvent.duration,
+        price: newEvent.price,
+        capacity: newEvent.capacity,
+        remainingCapacity: newEvent.remainingCapacity,
+        createdAt: newEvent.createdAt,
+        updatedAt: newEvent.updatedAt,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Event added successfully");
+          handleClose();
+        },
+        onError: () => {
+          toast.error("Failed to add Event");
+        },
+      },
+    );
   }
 
   const inputClass =
     "w-full rounded-xl bg-[#0f0f11] border border-[#2a2a35] px-3 py-2.5 text-sm text-[#e8e6e1] placeholder:text-[#4a4a52] focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all";
 
-  const labelClass = "text-xs font-medium text-[#7c7a76] uppercase tracking-wider";
+  const labelClass =
+    "text-xs font-medium text-[#7c7a76] uppercase tracking-wider";
 
   return (
     <>
@@ -146,19 +177,22 @@ export function AddEventDialog({ onAdd }: Props) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed top-50 inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={handleClose}
           />
 
           <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-[#2a2a35] bg-[#16161a] shadow-2xl animate-fade-in flex flex-col max-h-[90vh]">
-
             {/* Header */}
             <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-[#2a2a35] shrink-0">
               <div>
-                <h2 className="font-syne text-xl font-bold text-[#e8e6e1]">Add New Event</h2>
-                <p className="mt-1 text-sm text-[#7c7a76]">Fill in all details to publish a new event.</p>
+                <h2 className="font-syne text-xl font-bold text-[#e8e6e1]">
+                  Add New Event
+                </h2>
+                <p className="mt-1 text-sm text-[#7c7a76]">
+                  Fill in all details to publish a new event.
+                </p>
               </div>
               <button
                 onClick={handleClose}
@@ -168,8 +202,10 @@ export function AddEventDialog({ onAdd }: Props) {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="overflow-y-auto px-6 py-5 space-y-5">
-
+            <form
+              onSubmit={handleSubmit}
+              className="overflow-y-auto px-6 py-5 space-y-5"
+            >
               {/* Title */}
               <div className="space-y-1.5">
                 <label className={labelClass}>
@@ -254,8 +290,34 @@ export function AddEventDialog({ onAdd }: Props) {
 
               {/* hint under the row */}
               <p className="text-[10px] text-[#4a4a52] -mt-3">
-                Time is stored as a full DateTime — date and time are combined on submit.
+                Time is stored as a full DateTime — date and time are combined
+                on submit.
               </p>
+
+              {/* Duration */}
+              <div className="space-y-1.5">
+                <label className={labelClass}>
+                  Duration (minutes) <span className="text-amber-500">*</span>
+                </label>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    className={`${inputClass} pr-16 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                    placeholder="e.g. 120"
+                    value={form.duration}
+                    onChange={(e) => set("duration", e.target.value)}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#4a4a52] font-medium pointer-events-none">
+                    mins
+                  </span>
+                </div>
+
+                <p className="text-[10px] text-[#4a4a52]">
+                  Total event length (e.g. 90 for 1h 30m)
+                </p>
+              </div>
 
               {/* Price + Capacity */}
               <div className="grid grid-cols-2 gap-3">
@@ -270,13 +332,15 @@ export function AddEventDialog({ onAdd }: Props) {
                     <input
                       type="number"
                       min="0"
-                      className={`${inputClass} pl-10`}
+                      className={`${inputClass} pl-10 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                       placeholder="0"
                       value={form.price}
                       onChange={(e) => set("price", e.target.value)}
                     />
                   </div>
-                  <p className="text-[10px] text-[#4a4a52]">Enter 0 for free events</p>
+                  <p className="text-[10px] text-[#4a4a52]">
+                    Enter 0 for free events
+                  </p>
                 </div>
 
                 <div className="space-y-1.5">
@@ -286,7 +350,7 @@ export function AddEventDialog({ onAdd }: Props) {
                   <input
                     type="number"
                     min="1"
-                    className={inputClass}
+                    className={`${inputClass} appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                     placeholder="e.g. 200"
                     value={form.capacity}
                     onChange={(e) => set("capacity", e.target.value)}
@@ -330,7 +394,9 @@ export function AddEventDialog({ onAdd }: Props) {
                   <span className="flex items-center gap-1.5">
                     <ImageIcon className="h-3 w-3" />
                     Event Image
-                    <span className="normal-case text-[#4a4a52] font-normal">(optional)</span>
+                    <span className="normal-case text-[#4a4a52] font-normal">
+                      (optional)
+                    </span>
                   </span>
                 </label>
 
@@ -383,7 +449,9 @@ export function AddEventDialog({ onAdd }: Props) {
                     {uploadingImage ? (
                       <>
                         <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
-                        <span className="text-xs text-[#7c7a76]">Reading image...</span>
+                        <span className="text-xs text-[#7c7a76]">
+                          Reading image...
+                        </span>
                       </>
                     ) : (
                       <>
@@ -394,8 +462,12 @@ export function AddEventDialog({ onAdd }: Props) {
                           <p className="text-sm font-medium text-[#7c7a76] group-hover/drop:text-amber-400 transition-colors">
                             Click to upload an image
                           </p>
-                          <p className="text-xs text-[#4a4a52]">PNG, JPG, WEBP up to 5MB</p>
-                          <p className="text-[10px] text-[#4a4a52]">A default image is used if skipped</p>
+                          <p className="text-xs text-[#4a4a52]">
+                            PNG, JPG, WEBP up to 5MB
+                          </p>
+                          <p className="text-[10px] text-[#4a4a52]">
+                            A default image is used if skipped
+                          </p>
                         </div>
                       </>
                     )}
@@ -408,15 +480,21 @@ export function AddEventDialog({ onAdd }: Props) {
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="flex-1 rounded-xl border border-[#2a2a35] bg-transparent px-4 py-2.5 text-sm font-medium text-[#7c7a76] hover:bg-[#1e1e24] hover:text-[#e8e6e1] transition-all"
+                  disabled={isPending}
+                  className="flex-1 rounded-xl border border-[#2a2a35] bg-transparent px-4 py-2.5 text-sm font-medium text-[#7c7a76] hover:bg-[#1e1e24] hover:text-[#e8e6e1] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-400 px-4 py-2.5 text-sm font-semibold text-[#0f0f11] transition-colors"
+                  disabled={isPending}
+                  className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-400 px-4 py-2.5 text-sm font-semibold text-[#0f0f11] transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Add Event
+                  {isPending && (
+                    <span className="h-4 w-4 border-2 border-[#0f0f11] border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {isPending ? "Adding..." : "Add Event"}
                 </button>
               </div>
             </form>

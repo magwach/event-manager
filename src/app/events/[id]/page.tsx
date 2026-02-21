@@ -11,6 +11,10 @@ import {
   User,
   ArrowLeft,
   Ticket,
+  Users,
+  DollarSign,
+  Timer,
+  Info,
 } from "lucide-react";
 import { EVENTS } from "@/data/events";
 import { CategoryBadge } from "@/components/CategoryBadge";
@@ -28,8 +32,20 @@ export default function EventDetailPage({ params }: Props) {
   if (!event) notFound();
 
   const upcoming = isUpcoming(event.date);
+  const isSoldOut = event.remainingCapacity <= 0;
+
+  const availabilityLabel = isSoldOut
+    ? "Sold Out"
+    : event.remainingCapacity <= 10
+      ? "Limited Spots"
+      : "Available";
 
   function handleRegister() {
+    if (isSoldOut) {
+      toast.error("This event is sold out.");
+      return;
+    }
+
     toast.success("Successfully registered for event 🎉", {
       description: `You're registered for ${event!.title}`,
       duration: 4000,
@@ -59,10 +75,10 @@ export default function EventDetailPage({ params }: Props) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f11] via-[#0f0f11]/30 to-transparent" />
 
-        {/* Overlaid title on banner */}
+        {/* Overlaid title */}
         <div className="absolute bottom-0 left-0 p-8">
           <CategoryBadge category={event.category} className="mb-3" />
-          <h1 className="font-syne text-3xl sm:text-4xl font-800 text-white leading-tight max-w-2xl drop-shadow-lg">
+          <h1 className="font-syne text-3xl sm:text-4xl font-extrabold text-white leading-tight max-w-2xl drop-shadow-lg">
             {event.title}
           </h1>
         </div>
@@ -77,18 +93,19 @@ export default function EventDetailPage({ params }: Props) {
             }`}
           >
             <span
-              className={`h-2 w-2 rounded-full ${upcoming ? "bg-amber-400 animate-pulse" : "bg-[#7c7a76]"}`}
+              className={`h-2 w-2 rounded-full ${
+                upcoming ? "bg-amber-400 animate-pulse" : "bg-[#7c7a76]"
+              }`}
             />
             {upcoming ? "Upcoming" : "Past Event"}
           </span>
         </div>
       </div>
 
-      {/* Content Grid */}
+      {/* Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main content */}
+        {/* Main */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Description */}
           <div className="rounded-2xl border border-[#2a2a35] bg-[#16161a] p-6">
             <h2 className="font-syne text-lg font-semibold text-[#e8e6e1] mb-4">
               About This Event
@@ -101,7 +118,7 @@ export default function EventDetailPage({ params }: Props) {
 
         {/* Sidebar */}
         <div className="space-y-4">
-          {/* Details card */}
+          {/* Details Card */}
           <div className="rounded-2xl border border-[#2a2a35] bg-[#16161a] p-6 space-y-4">
             <h2 className="font-syne text-sm font-semibold text-[#e8e6e1] uppercase tracking-wider">
               Event Details
@@ -113,50 +130,105 @@ export default function EventDetailPage({ params }: Props) {
                 label="Date"
                 value={formatDate(event.date)}
               />
-              <DetailRow icon={Clock} label="Time" value={event.time} />
+
+              <DetailRow
+                icon={Clock}
+                label="Time"
+                value={new Date(event.time).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              />
+
+              <DetailRow
+                icon={Timer}
+                label="Duration"
+                value={`${event.duration} mins`}
+              />
+
               <DetailRow
                 icon={MapPin}
                 label="Location"
                 value={event.location}
               />
+
               <DetailRow
                 icon={User}
                 label="Organizer"
                 value={event.organizer}
               />
+
+              <DetailRow
+                icon={DollarSign}
+                label="Price"
+                value={event.price === 0 ? "Free" : `KSh ${event.price}`}
+              />
+
+              <DetailRow
+                icon={Users}
+                label="Capacity"
+                value={`${event.remainingCapacity}/${event.capacity} seats left`}
+              />
             </div>
 
-            <div className="pt-2 border-t border-[#2a2a35]">
+            <div className="pt-2 border-t border-[#2a2a35] space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[#7c7a76]">Category</span>
                 <CategoryBadge category={event.category} />
               </div>
+
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-amber-400/70" />
+                <span
+                  className={`text-xs font-medium ${
+                    isSoldOut
+                      ? "text-red-400"
+                      : event.remainingCapacity <= 10
+                        ? "text-amber-400"
+                        : "text-emerald-400"
+                  }`}
+                >
+                  {availabilityLabel}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Register card */}
+          {/* Register Card */}
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6">
             <div className="flex items-center gap-2 mb-2">
               <Ticket className="h-4 w-4 text-amber-400" />
               <span className="font-syne text-sm font-semibold text-[#e8e6e1]">
-                {upcoming ? "Register Now" : "Event Ended"}
+                {isSoldOut
+                  ? "Sold Out"
+                  : upcoming
+                    ? "Register Now"
+                    : "Event Ended"}
               </span>
             </div>
+
             <p className="text-xs text-[#7c7a76] mb-4">
-              {upcoming
-                ? "Secure your spot for this event before registration closes."
-                : "This event has already taken place."}
+              {isSoldOut
+                ? "All seats for this event have been booked."
+                : upcoming
+                  ? "Secure your spot before registration closes."
+                  : "This event has already taken place."}
             </p>
+
             <button
               onClick={handleRegister}
-              disabled={!upcoming}
+              disabled={!upcoming || isSoldOut}
               className={`w-full rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
-                upcoming
+                upcoming && !isSoldOut
                   ? "bg-amber-500 hover:bg-amber-400 text-[#0f0f11] hover:shadow-lg hover:shadow-amber-500/20 active:scale-[0.98]"
                   : "bg-[#2a2a35] text-[#4a4a52] cursor-not-allowed"
               }`}
             >
-              {upcoming ? "Register for Event" : "Registration Closed"}
+              {isSoldOut
+                ? "Sold Out"
+                : upcoming
+                  ? "Register for Event"
+                  : "Registration Closed"}
             </button>
           </div>
         </div>

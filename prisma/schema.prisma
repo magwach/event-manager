@@ -48,6 +48,7 @@ model Event {
   organizer         String
   image             String
   time              DateTime
+  duration          Int
   price             Int
   capacity          Int
   remainingCapacity Int

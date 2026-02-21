@@ -31,10 +31,6 @@ export default function AdminPage() {
 
   const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
-  function handleAdd(newEvent: Event) {
-    setEvents((prev) => [newEvent, ...prev]);
-  }
-
   function handleEdit(updated: Event) {
     setEvents((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
   }
@@ -156,7 +152,7 @@ export default function AdminPage() {
               Manage, add, and remove events from your dashboard.
             </p>
           </div>
-          <AddEventDialog onAdd={handleAdd} />
+          <AddEventDialog />
         </div>
       </div>
 
