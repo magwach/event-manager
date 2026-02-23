@@ -19,7 +19,9 @@ export async function getAllEvents() {
     if (existingUser.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL)
       throw new Error("Unauthorized");
 
-    const events = await prisma.event.findMany({});
+    const events = await prisma.event.findMany({
+      orderBy: { date: "desc" },
+    });
 
     return events;
   } catch (error) {
@@ -157,5 +159,49 @@ export async function editEvent(event: Event) {
   } catch (error) {
     console.error("Error updating event", error);
     throw new Error("Error updating event");
+  }
+}
+
+export async function deleteEvent(eventId: string) {
+  try {
+    const user = await currentUser();
+    if (!user) throw new Error("User not found");
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        clerkId: user.id,
+      },
+    });
+    if (existingUser?.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL)
+      throw new Error("Unauthorized");
+
+    const existingEvent = await prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    });
+
+    if (!existingEvent) throw new Error("Couldn't find the event");
+
+    try {
+      const publicId = getPublicIdFromUrl(existingEvent.image);
+
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
+    } catch (error) {
+      console.error(error);
+      throw new Error("Failed to delete the image");
+    }
+
+    const deletedEvent = await prisma.event.delete({
+      where: {
+        id: eventId,
+      },
+    });
+
+    return deletedEvent;
+  } catch (error) {
+    console.error("Error deleting event", error);
+    throw new Error("Error deleting event");
   }
 }

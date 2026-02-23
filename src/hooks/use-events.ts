@@ -1,4 +1,9 @@
-import { addEvent, editEvent, getAllEvents } from "@/lib/actions/events";
+import {
+  addEvent,
+  deleteEvent,
+  editEvent,
+  getAllEvents,
+} from "@/lib/actions/events";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useGetAllEvents() {
@@ -31,6 +36,23 @@ export function useEditEvent() {
   const result = useMutation({
     mutationFn: editEvent,
     mutationKey: ["editEvent"],
+    onSuccess() {
+      queryClient.invalidateQueries({
+        queryKey: ["getAllEvents"],
+      });
+    },
+    onError(error) {
+      console.error(error);
+    },
+  });
+  return result;
+}
+
+export function useDeleteEvent() {
+  const queryClient = useQueryClient();
+  const result = useMutation({
+    mutationFn: deleteEvent,
+    mutationKey: ["deleteEvent"],
     onSuccess() {
       queryClient.invalidateQueries({
         queryKey: ["getAllEvents"],
