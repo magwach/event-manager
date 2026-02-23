@@ -47,7 +47,7 @@ model Event {
   location          String
   organizer         String
   image             String
-  time              DateTime
+  time              String
   duration          Int
   price             Int
   capacity          Int

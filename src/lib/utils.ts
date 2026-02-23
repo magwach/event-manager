@@ -17,3 +17,13 @@ export function formatDate(dateStr: string | Date): string {
 export function isUpcoming(dateStr: string | Date): boolean {
   return new Date(dateStr) >= new Date();
 }
+
+export function getPublicIdFromUrl(url: String) {
+  if (!url) return null;
+  const cleanUrl = url.split("?")[0];
+  const parts = cleanUrl.split("/upload/")[1];
+  if (!parts) return null;
+
+  const withoutVersion = parts.replace(/^v[0-9]+\//, "");
+  return withoutVersion.replace(/\.[^/.]+$/, "");
+}
