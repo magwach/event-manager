@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   X,
   Users,
+  Loader2,
 } from "lucide-react";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { AddEventDialog } from "@/components/AddEventDialog";
@@ -19,7 +20,7 @@ import { useRouter } from "next/navigation";
 import { EditEventDialog } from "@/components/EditEventDialog";
 import { AdminTableSkeleton } from "@/components/AdminTableSkeleton";
 import { Event } from "@/generated/prisma/client";
-import { useGetAllEvents } from "@/hooks/use-events";
+import { useDeleteEvent, useGetAllEvents } from "@/hooks/use-events";
 
 export default function AdminPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -29,11 +30,9 @@ export default function AdminPage() {
 
   const { data, isLoading } = useGetAllEvents();
 
-  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  const { mutate: deleteEvent, isPending } = useDeleteEvent();
 
-  function handleEdit(updated: Event) {
-    setEvents((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
-  }
+  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   function requestDelete(event: Event) {
     setPendingDelete(event);
@@ -41,11 +40,15 @@ export default function AdminPage() {
 
   function confirmDelete() {
     if (!pendingDelete) return;
-    setEvents((prev) => prev.filter((e) => e.id !== pendingDelete.id));
-    toast.error(`"${pendingDelete.title}" has been deleted.`, {
-      duration: 3000,
+    deleteEvent(pendingDelete?.id, {
+      onSuccess: () => {
+        toast.success("Event deleted successfully");
+        setPendingDelete(null);
+      },
+      onError: () => {
+        toast.error("Failed to add Event");
+      },
     });
-    setPendingDelete(null);
   }
 
   function cancelDelete() {
@@ -118,16 +121,38 @@ export default function AdminPage() {
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={cancelDelete}
-                  className="flex-1 rounded-xl border border-[#2a2a35] bg-transparent px-4 py-2.5 text-sm font-medium text-[#7c7a76] hover:bg-[#1e1e24] hover:text-[#e8e6e1] transition-all"
+                  disabled={isPending}
+                  className={`flex-1 rounded-xl border border-[#2a2a35] bg-transparent px-4 py-2.5 text-sm font-medium transition-all
+                        ${
+                          isPending
+                            ? "text-[#4a4a52] cursor-not-allowed opacity-60"
+                            : "text-[#7c7a76] hover:bg-[#1e1e24] hover:text-[#e8e6e1]"
+                        }`}
                 >
                   Cancel
                 </button>
+
                 <button
                   onClick={confirmDelete}
-                  className="flex-1 rounded-xl bg-rose-500 hover:bg-rose-400 px-4 py-2.5 text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2"
+                  disabled={isPending}
+                  className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2
+                        ${
+                          isPending
+                            ? "bg-rose-500/70 cursor-not-allowed"
+                            : "bg-rose-500 hover:bg-rose-400"
+                        } text-white`}
                 >
-                  <Trash2 className="h-4 w-4" />
-                  Yes, Delete
+                  {isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      Yes, Delete
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -304,9 +329,7 @@ export default function AdminPage() {
                         {/* Actions */}
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <EditEventDialog
-                              event={event}
-                            />
+                            <EditEventDialog event={event} />
                             <button
                               onClick={() => requestDelete(event)}
                               className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2a35] bg-transparent px-3 py-1.5 text-xs font-medium text-[#7c7a76] hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-400 transition-all"
