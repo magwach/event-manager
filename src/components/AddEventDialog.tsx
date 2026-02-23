@@ -109,15 +109,13 @@ export function AddEventDialog() {
     if (!form.capacity || isNaN(capacity) || capacity < 1)
       return toast.error("Capacity must be at least 1.");
 
-    const timeAsDateTime = new Date(`${form.date}T${form.time}:00`);
-
     const newEvent: any = {
       title: form.title.trim(),
       description: form.description.trim(),
       fullDescription: form.fullDescription.trim(),
       category: form.category,
       date: new Date(form.date),
-      time: timeAsDateTime,
+      time: form.time,
       duration,
       location: form.location.trim(),
       organizer: form.organizer.trim(),

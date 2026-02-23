@@ -306,7 +306,6 @@ export default function AdminPage() {
                           <div className="flex items-center justify-end gap-2">
                             <EditEventDialog
                               event={event}
-                              onSave={handleEdit}
                             />
                             <button
                               onClick={() => requestDelete(event)}

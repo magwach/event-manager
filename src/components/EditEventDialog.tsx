@@ -4,15 +4,15 @@ import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Pencil, ImageIcon, X, Upload, Loader2 } from "lucide-react";
 import { Category, Event } from "@/generated/prisma/client";
+import { useEditEvent } from "@/hooks/use-events";
 
 interface Props {
   event: Event;
-  onSave: (updated: Event) => void;
 }
 
 const CATEGORIES: Category[] = ["Tech", "Sports", "Academic", "Social"];
 
-export function EditEventDialog({ event, onSave }: Props) {
+export function EditEventDialog({ event }: Props) {
   const [open, setOpen] = useState(false);
 
   // Pre-fill form from the event being edited
@@ -23,6 +23,7 @@ export function EditEventDialog({ event, onSave }: Props) {
     category: event.category as Category,
     date: event.date.toISOString().split("T")[0],
     time: event.time,
+    duration: String(event.duration),
     location: event.location,
     organizer: event.organizer,
     price: String(event.price),
@@ -36,6 +37,8 @@ export function EditEventDialog({ event, onSave }: Props) {
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { mutate: editEvent, isPending } = useEditEvent();
+
   // Re-sync form if the event prop changes (e.g. parent re-renders)
   useEffect(() => {
     if (!open) {
@@ -46,6 +49,7 @@ export function EditEventDialog({ event, onSave }: Props) {
         category: event.category,
         date: event.date.toISOString().split("T")[0],
         time: event.time,
+        duration: String(event.duration),
         location: event.location,
         organizer: event.organizer,
         price: String(event.price),
@@ -119,12 +123,14 @@ export function EditEventDialog({ event, onSave }: Props) {
     const capacity = parseInt(form.capacity, 10);
     const remainingCapacity = parseInt(form.remainingCapacity, 10);
 
+    const duration = parseInt(form.duration, 10);
+
+    if (isNaN(duration) || duration < 1)
+      return toast.error("Duration must be at least 1 minute.");
     if (isNaN(price) || price < 0)
       return toast.error("Enter a valid price (0 or more).");
     if (isNaN(capacity) || capacity < 1)
       return toast.error("Capacity must be at least 1.");
-    if (isNaN(remainingCapacity) || remainingCapacity < 0)
-      return toast.error("Remaining capacity cannot be negative.");
     if (remainingCapacity > capacity)
       return toast.error("Remaining capacity cannot exceed total capacity.");
 
@@ -136,17 +142,43 @@ export function EditEventDialog({ event, onSave }: Props) {
       category: form.category,
       date: new Date(form.date),
       time: form.time,
+      duration,
       location: form.location.trim(),
       organizer: form.organizer.trim(),
       image: imagePreview,
       price,
       capacity,
-      remainingCapacity,
     };
 
-    onSave(updated);
-    toast.success("Event updated successfully ");
-    handleClose();
+    editEvent(
+      {
+        id: updated.id,
+        title: updated.title,
+        description: updated.description,
+        fullDescription: updated.fullDescription,
+        date: updated.date,
+        category: updated.category,
+        location: updated.location,
+        organizer: updated.organizer,
+        image: updated.image,
+        time: updated.time,
+        duration: updated.duration,
+        price: updated.price,
+        capacity: updated.capacity,
+        remainingCapacity: updated.remainingCapacity,
+        createdAt: updated.createdAt,
+        updatedAt: updated.updatedAt,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Event edited successfully");
+          handleClose();
+        },
+        onError: () => {
+          toast.error("Failed to edit Event");
+        },
+      },
+    );
   }
 
   const inputClass =
@@ -171,7 +203,7 @@ export function EditEventDialog({ event, onSave }: Props) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed top-50 inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -294,16 +326,43 @@ export function EditEventDialog({ event, onSave }: Props) {
                 </div>
               </div>
 
-              {/* Time */}
-              <div className="space-y-1.5">
-                <label className={labelClass}>Time</label>
-                <input
-                  className={inputClass}
-                  placeholder="e.g. 9:00 AM – 6:00 PM"
-                  value={form.time.toISOString().split("T")[0]}
-                  onChange={(e) => set("time", e.target.value)}
-                />
+              {/* Start Time + Duration */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Start Time */}
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Start Time</label>
+                  <input
+                    type="time"
+                    className={inputClass}
+                    value={form.time}
+                    onChange={(e) => set("time", e.target.value)}
+                  />
+                </div>
+
+                {/* Duration */}
+                <div className="space-y-1.5">
+                  <label className={labelClass}>
+                    Duration (minutes) <span className="text-amber-500">*</span>
+                  </label>
+
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="1"
+                      className={`${inputClass} pr-16 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                      value={form.duration}
+                      onChange={(e) => set("duration", e.target.value)}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#4a4a52] font-medium pointer-events-none">
+                      mins
+                    </span>
+                  </div>
+                </div>
               </div>
+
+              <p className="text-[10px] text-[#4a4a52] -mt-3">
+                Duration example: 120 = 2 hours
+              </p>
 
               {/* Price + Capacity + Remaining */}
               <div className="grid grid-cols-3 gap-3">
@@ -318,7 +377,7 @@ export function EditEventDialog({ event, onSave }: Props) {
                     <input
                       type="number"
                       min="0"
-                      className={`${inputClass} pl-10`}
+                      className={`${inputClass} pl-10 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                       value={form.price}
                       onChange={(e) => set("price", e.target.value)}
                     />
@@ -331,7 +390,7 @@ export function EditEventDialog({ event, onSave }: Props) {
                   <input
                     type="number"
                     min="1"
-                    className={inputClass}
+                    className={`${inputClass} appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                     value={form.capacity}
                     onChange={(e) => set("capacity", e.target.value)}
                   />
@@ -343,9 +402,9 @@ export function EditEventDialog({ event, onSave }: Props) {
                   <input
                     type="number"
                     min="0"
-                    className={inputClass}
+                    className={`${inputClass} cursor-not-allowed bg-gray-700`}
                     value={form.remainingCapacity}
-                    onChange={(e) => set("remainingCapacity", e.target.value)}
+                    disabled={true}
                   />
                 </div>
               </div>
@@ -444,19 +503,46 @@ export function EditEventDialog({ event, onSave }: Props) {
 
               {/* Actions */}
               <div className="flex gap-3 pt-2 pb-1">
+                {/* Cancel */}
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="flex-1 rounded-xl border border-[#2a2a35] bg-transparent px-4 py-2.5 text-sm font-medium text-[#7c7a76] hover:bg-[#1e1e24] hover:text-[#e8e6e1] transition-all"
+                  disabled={isPending}
+                  className={`flex-1 rounded-xl border border-[#2a2a35] px-4 py-2.5 text-sm font-medium transition-all
+                      ${
+                        isPending
+                          ? "bg-[#1e1e24] text-[#4a4a52] cursor-not-allowed opacity-60"
+                          : "bg-transparent text-[#7c7a76] hover:bg-[#1e1e24] hover:text-[#e8e6e1]"
+                      }
+                    `}
                 >
                   Cancel
                 </button>
+
+                {/* Save */}
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-400 px-4 py-2.5 text-sm font-semibold text-[#0f0f11] transition-colors flex items-center justify-center gap-2"
+                  disabled={isPending}
+                  className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all
+                            ${
+                              isPending
+                                ? "bg-amber-500/70 cursor-not-allowed"
+                                : "bg-amber-500 hover:bg-amber-400 active:scale-[0.98]"
+                            }
+                        text-[#0f0f11]
+                      `}
                 >
-                  <Pencil className="h-4 w-4" />
-                  Save Changes
+                  {isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="h-4 w-4" />
+                      Save Changes
+                    </>
+                  )}
                 </button>
               </div>
             </form>
