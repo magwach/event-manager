@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { formatDate, isUpcoming } from "@/lib/utils";
-import type { Event } from "@/data/events";
+import { Event } from "@/generated/prisma/client";
 
 interface Props {
   event: Event;
