@@ -16,10 +16,11 @@ import {
   Timer,
   Info,
 } from "lucide-react";
-import { EVENTS } from "@/data/events";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { formatDate, isUpcoming } from "@/lib/utils";
 import { use } from "react";
+import { useGetEventDetails } from "@/hooks/use-events";
+import { EventDetailSkeleton } from "@/components/EventDetailSkeleton";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -27,9 +28,12 @@ interface Props {
 
 export default function EventDetailPage({ params }: Props) {
   const { id } = use(params);
-  const event = EVENTS.find((e) => e.id === id);
 
-  if (!event) notFound();
+  const { data: event, isError, isLoading } = useGetEventDetails(id);
+
+  if (isLoading) return <EventDetailSkeleton />;
+
+  if (!event || isError) notFound();
 
   const upcoming = isUpcoming(event.date);
   const isSoldOut = event.remainingCapacity <= 0;
@@ -46,7 +50,7 @@ export default function EventDetailPage({ params }: Props) {
       return;
     }
 
-    toast.success("Successfully registered for event 🎉", {
+    toast.success("Successfully registered for event ", {
       description: `You're registered for ${event!.title}`,
       duration: 4000,
     });
@@ -134,10 +138,7 @@ export default function EventDetailPage({ params }: Props) {
               <DetailRow
                 icon={Clock}
                 label="Time"
-                value={new Date(event.time).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                value={event.time}
               />
 
               <DetailRow

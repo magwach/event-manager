@@ -3,6 +3,7 @@ import {
   deleteEvent,
   editEvent,
   getAllEvents,
+  getEventDetails,
 } from "@/lib/actions/events";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -10,6 +11,14 @@ export function useGetAllEvents() {
   const result = useQuery({
     queryFn: getAllEvents,
     queryKey: ["getAllEvents"],
+  });
+  return result;
+}
+
+export function useGetEventDetails(eventId: string) {
+  const result = useQuery({
+    queryFn: () => getEventDetails(eventId),
+    queryKey: ["getEventDetails"],
   });
   return result;
 }
@@ -22,6 +31,9 @@ export function useAddEvent() {
     onSuccess() {
       queryClient.invalidateQueries({
         queryKey: ["getAllEvents"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["getEventDetails"],
       });
     },
     onError(error) {
