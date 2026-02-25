@@ -1,5 +1,7 @@
 import {
   addEvent,
+  bookEvent,
+  checkBookingAvailability,
   deleteEvent,
   editEvent,
   getAllEvents,
@@ -71,6 +73,38 @@ export function useDeleteEvent() {
       });
     },
     onError(error) {
+      console.error(error);
+    },
+  });
+  return result;
+}
+
+export function useCheckBookingAvailability(eventId: string, options = {}) {
+  const result = useQuery({
+    queryFn: () => checkBookingAvailability(eventId),
+    queryKey: [eventId + "checkBookingAvailability"],
+    ...options,
+  });
+  return result;
+}
+
+export function useBookEvent(
+  sessionId: string,
+  eventId: string,
+  clerkId: string,
+) {
+  const queryClient = useQueryClient();
+
+  const result = useMutation({
+    mutationFn: () => bookEvent(sessionId, eventId, clerkId),
+    mutationKey: ["bookEvent"],
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["getEventDetails"] });
+      queryClient.invalidateQueries({
+        queryKey: [eventId + "checkBookingAvailability"],
+      });
+    },
+    onError: (error) => {
       console.error(error);
     },
   });

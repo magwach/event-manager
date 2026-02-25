@@ -3,7 +3,8 @@ import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "../prisma";
 import cloudinary from "../cloudinary";
 import { Event } from "@/generated/prisma/browser";
-import { getPublicIdFromUrl } from "../utils";
+import { generateReceipt } from "../server-utils/utils";
+import { generateReceiptId, getPublicIdFromUrl } from "../clent-utils/utils";
 
 export async function getAllEvents() {
   try {
@@ -167,6 +168,23 @@ export async function editEvent(event: Event) {
   }
 }
 
+export async function checkBookingAvailability(eventId: string) {
+  try {
+    const existingEvent = await prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    });
+
+    if (!existingEvent) throw new Error("Event not found");
+
+    return existingEvent;
+  } catch (error) {
+    console.error("Error while checking booking availability", error);
+    throw new Error("Error while checking booking availability");
+  }
+}
+
 export async function deleteEvent(eventId: string) {
   try {
     const user = await currentUser();
@@ -208,5 +226,99 @@ export async function deleteEvent(eventId: string) {
   } catch (error) {
     console.error("Error deleting event", error);
     throw new Error("Error deleting event");
+  }
+}
+
+export async function bookEvent(
+  sessionId: string,
+  eventId: string,
+  clerkId: string,
+) {
+  try {
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        clerkId,
+      },
+    });
+
+    if (!existingUser) throw new Error("User not found");
+
+    const existingEvent = await prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    });
+
+    if (!existingEvent) throw new Error("Couldn't find the event");
+    const existingBookedEvent = await prisma.bookedEvents.findUnique({
+      where: {
+        sessionId,
+      },
+    });
+    if (existingBookedEvent) throw new Error("Already booked");
+    const receiptId = generateReceiptId();
+    const bookedEvent = await prisma.bookedEvents.create({
+      data: {
+        userId: existingUser?.id,
+        eventId: existingEvent?.id,
+        sessionId,
+        receiptId,
+        receipt: "",
+      },
+    });
+
+    let updatedRemainingCapacity = existingEvent.remainingCapacity - 1;
+
+    await prisma.event.update({
+      where: {
+        id: existingEvent.id,
+      },
+      data: {
+        remainingCapacity: updatedRemainingCapacity,
+      },
+    });
+
+    let receipt = null;
+
+    try {
+      receipt = await generateReceipt(
+        bookedEvent,
+        existingUser,
+        existingEvent,
+        existingEvent.price,
+      );
+    } catch (error) {
+      console.error(error);
+      throw new Error("Failed to generate receipt");
+    }
+
+    if (receipt) {
+      await prisma.bookedEvents.update({
+        where: {
+          id: bookedEvent.id,
+        },
+        data: {
+          receipt,
+        },
+      });
+    }
+    return {
+      receiptId,
+      eventTitle: existingEvent.title,
+      date: existingEvent.date,
+      time: existingEvent.time,
+      location: existingEvent.location,
+      category: existingEvent.category,
+      price: existingEvent.price,
+      total: existingEvent.price,
+      attendee:
+        `${existingUser.firstName ?? ""} ${existingUser.lastName ?? ""}`.trim(),
+      bookedAt: bookedEvent.createdAt,
+      downloadUrl: receipt ?? "",
+      sessionId: bookedEvent.sessionId,
+    };
+  } catch (error) {
+    console.error("Error while booking event", error);
+    throw new Error("Error while booking event");
   }
 }

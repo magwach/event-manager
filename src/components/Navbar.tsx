@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/clent-utils/utils";
 import {
   Calendar,
   LayoutDashboard,

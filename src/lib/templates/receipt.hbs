@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Receipt · {{booking.reciptId}}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0f0f11;
+      color: #e8e6e1;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      line-height: 1.5;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page { max-width: 600px; margin: 0 auto; padding: 28px 28px; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .brand { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: #f59e0b; }
+    .brand span { color: #e8e6e1; }
+    .receipt-meta { text-align: right; }
+    .receipt-id { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: #f59e0b; }
+    .receipt-date { font-size: 10px; color: #4a4a52; margin-top: 2px; }
+
+    /* Status banner */
+    .banner {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 10px; padding: 8px 14px; margin-bottom: 14px;
+    }
+    .banner-dot { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; }
+    .banner-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: #f59e0b; }
+    .banner-sub { font-size: 10px; color: #7c7a76; }
+
+    /* Two-column layout */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+
+    /* Card */
+    .card { background: #16161a; border: 1px solid #2a2a35; border-radius: 12px; overflow: hidden; }
+    .card__head {
+      background: #0f0f11; border-bottom: 1px solid #2a2a35;
+      padding: 8px 14px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .card__head-title { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #7c7a76; }
+    .card__body { padding: 12px 14px; }
+
+    /* Event card */
+    .event-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; color: #e8e6e1; margin-bottom: 6px; }
+    .badge {
+      display: inline-block; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 100px; padding: 2px 8px; font-size: 9px; font-weight: 600;
+      color: #f59e0b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
+    }
+    .detail-row { display: flex; align-items: center; gap: 6px; color: #7c7a76; font-size: 11px; margin-bottom: 5px; }
+    .detail-row .icon { opacity: 0.6; font-size: 11px; }
+
+    /* Info blocks */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .info-block { background: #0f0f11; border: 1px solid #2a2a35; border-radius: 8px; padding: 8px 10px; }
+    .info-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #4a4a52; margin-bottom: 2px; }
+    .info-value { font-size: 11px; font-weight: 500; color: #e8e6e1; }
+
+    /* Payment + QR side by side */
+    .payment-qr { display: flex; align-items: center; gap: 16px; }
+    .price-rows { flex: 1; }
+    .price-row { display: flex; justify-content: space-between; font-size: 11px; padding: 5px 0; }
+    .price-row__label { color: #7c7a76; }
+    .price-row__value { color: #e8e6e1; font-weight: 500; }
+    .price-row--total { border-top: 1px solid #2a2a35; margin-top: 4px; padding-top: 8px; }
+    .price-row--total .price-row__label { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: #e8e6e1; }
+    .price-row--total .price-row__value { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; color: #f59e0b; }
+
+    /* QR */
+    .qr-block { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .qr-wrapper { background: #fff; border-radius: 8px; padding: 6px; line-height: 0; }
+    .qr-wrapper img { width: 80px; height: 80px; display: block; }
+    .qr-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #4a4a52; }
+    .qr-id { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; color: #f59e0b; }
+
+    /* Footer */
+    .footer { text-align: center; margin-top: 14px; border-top: 1px dashed #2a2a35; padding-top: 12px; }
+    .footer__brand { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: #f59e0b; margin-bottom: 3px; }
+    .footer__text { font-size: 10px; color: #4a4a52; line-height: 1.7; }
+    .footer__text a { color: #7c7a76; text-decoration: none; }
+
+    @media print {
+      body { background: #0f0f11; }
+      .page { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="brand">Event<span>Flow</span></div>
+      <div style="font-size:10px; color:#4a4a52; margin-top:1px;">Official Booking Receipt</div>
+    </div>
+    <div class="receipt-meta">
+      <div style="font-size:9px; color:#4a4a52; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Receipt ID</div>
+      <div class="receipt-id">{{booking.reciptId}}</div>
+      <div class="receipt-date">{{formatDate booking.createdAt}}</div>
+    </div>
+  </div>
+
+  <!-- Status banner -->
+  <div class="banner">
+    <div class="banner-dot"></div>
+    <div>
+      <div class="banner-title">Payment Confirmed</div>
+      <div class="banner-sub">Session · {{booking.sessionId}}</div>
+    </div>
+  </div>
+
+  <!-- Event + Attendee side by side -->
+  <div class="two-col">
+
+    <!-- Event -->
+    <div class="card">
+      <div class="card__head">
+        <span class="card__head-title">Event</span>
+        <span style="font-size:10px; color:#4a4a52;">{{event.organizer}}</span>
+      </div>
+      <div class="card__body">
+        <div class="event-title">{{event.title}}</div>
+        <div class="badge">{{event.category}}</div>
+        <div class="detail-row"><span class="icon">📅</span> {{formatDate event.date}}</div>
+        <div class="detail-row"><span class="icon">🕐</span> {{event.time}} <span style="color:#4a4a52;">({{event.duration}}m)</span></div>
+        <div class="detail-row"><span class="icon">📍</span> {{event.location}}</div>
+      </div>
+    </div>
+
+    <!-- Attendee -->
+    <div class="card">
+      <div class="card__head">
+        <span class="card__head-title">Attendee</span>
+      </div>
+      <div class="card__body">
+        <div class="info-grid">
+          <div class="info-block" style="grid-column: span 2;">
+            <div class="info-label">Full Name</div>
+            <div class="info-value">{{user.firstName}} {{user.lastName}}</div>
+          </div>
+          <div class="info-block" style="grid-column: span 2;">
+            <div class="info-label">Email</div>
+            <div class="info-value" style="font-size:10px;">{{user.email}}</div>
+          </div>
+          {{#if user.phone}}
+          <div class="info-block">
+            <div class="info-label">Phone</div>
+            <div class="info-value">{{user.phone}}</div>
+          </div>
+          {{/if}}
+          <div class="info-block" style="{{#unless user.phone}}grid-column: span 2;{{/unless}}">
+            <div class="info-label">Booking ID</div>
+            <div class="info-value" style="font-size:10px; font-family:monospace;">{{booking.id}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Payment summary + QR -->
+  <div class="card">
+    <div class="card__head">
+      <span class="card__head-title">Payment Summary</span>
+      <span style="font-size:10px; color:#4a4a52; text-transform:uppercase; letter-spacing:0.5px;">KES</span>
+    </div>
+    <div class="card__body">
+      <div class="payment-qr">
+        <div class="price-rows">
+          <div class="price-row">
+            <span class="price-row__label">Ticket — {{event.title}}</span>
+            <span class="price-row__value">KES {{formatAmount event.price}}</span>
+          </div>
+          {{#if serviceFee}}
+          <div class="price-row">
+            <span class="price-row__label">Service fee</span>
+            <span class="price-row__value">KES {{formatAmount serviceFee}}</span>
+          </div>
+          {{/if}}
+          <div class="price-row price-row--total">
+            <span class="price-row__label">Total Paid</span>
+            <span class="price-row__value">KES {{formatAmount totalPaid}}</span>
+          </div>
+        </div>
+
+        <!-- QR code -->
+        <div class="qr-block">
+          <div class="qr-wrapper">
+            <img src="{{qrDataUrl}}" alt="QR {{booking.reciptId}}" />
+          </div>
+          <div class="qr-label">Scan to verify</div>
+          <div class="qr-id">{{booking.reciptId}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer__brand">EventFlow</div>
+    <div class="footer__text">
+      Present this receipt at the venue entrance · <a href="mailto:support@eventflow.co.ke">support@eventflow.co.ke</a><br />
+      Automatically generated — no signature required.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

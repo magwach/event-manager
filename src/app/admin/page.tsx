@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { AddEventDialog } from "@/components/AddEventDialog";
-import { formatDate, isUpcoming } from "@/lib/utils";
+import { formatDate, isUpcoming } from "@/lib/clent-utils/utils";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { EditEventDialog } from "@/components/EditEventDialog";

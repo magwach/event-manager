@@ -16,8 +16,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { CategoryBadge } from "@/components/CategoryBadge";
-import { formatDate, isUpcoming } from "@/lib/utils";
-import { mockUser } from "@/data/users";
+import { formatDate, isUpcoming } from "@/lib/clent-utils/utils";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useGetUserProfile } from "@/hooks/use-users";
@@ -230,12 +229,13 @@ function BookedEventCard({
 }: {
   booking: {
     id: string;
-    reciept: string;
+    receiptId: string;
+    receipt: string;
     createdAt: Date;
-    event: (typeof mockUser.bookedEvents)[0]["event"];
+    event: any;
   };
 }) {
-  const { event, reciept, createdAt } = booking;
+  const { event, receipt, receiptId, createdAt } = booking;
   const upcoming = isUpcoming(event.date.toString());
 
   return (
@@ -293,7 +293,7 @@ function BookedEventCard({
         <div className="flex items-center justify-between pt-2 border-t border-[#2a2a35]">
           <div className="flex items-center gap-1.5 text-xs text-[#4a4a52]">
             <Receipt className="h-3 w-3" />
-            <span>{reciept}</span>
+            <span>{receiptId}</span>
           </div>
           <span className="font-syne text-xs font-semibold text-amber-400">
             KES {event.price.toLocaleString()}
@@ -309,14 +309,24 @@ function BookedEventCard({
             year: "numeric",
           })}
         </p>
+        <div className="mt-2 flex flex-col gap-2">
+          <Link
+            href={`/events/${event.id}`}
+            className="flex items-center justify-center rounded-xl border border-[#2a2a35] hover:border-amber-500/30 bg-[#1e1e24] hover:bg-amber-500/10 px-3 py-2 text-xs font-medium text-[#e8e6e1] hover:text-amber-400 transition-all"
+          >
+            View Event Details
+          </Link>
 
-        {/* View event link */}
-        <Link
-          href={`/events/${event.id}`}
-          className="mt-1 flex items-center justify-center rounded-xl border border-[#2a2a35] hover:border-amber-500/30 bg-[#1e1e24] hover:bg-amber-500/10 px-3 py-2 text-xs font-medium text-[#e8e6e1] hover:text-amber-400 transition-all"
-        >
-          View Event Details
-        </Link>
+          <a
+            href={receipt}
+            download={`Receipt_${receiptId}.pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center rounded-xl border border-[#2a2a35] hover:border-amber-500/30 bg-[#1e1e24] hover:bg-amber-500/10 px-3 py-2 text-xs font-medium text-[#e8e6e1] hover:text-amber-400 transition-all"
+          >
+            Download Receipt
+          </a>
+        </div>
       </div>
     </div>
   );

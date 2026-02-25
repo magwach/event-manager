@@ -27,3 +27,16 @@ export function getPublicIdFromUrl(url: String) {
   const withoutVersion = parts.replace(/^v[0-9]+\//, "");
   return withoutVersion.replace(/\.[^/.]+$/, "");
 }
+
+export function generateReceiptId(): string {
+  const year = new Date().getFullYear();
+
+  const sequence = String(Date.now()).slice(-5);
+
+  const suffix = Math.floor(Math.random() * 0xffff)
+    .toString(16)
+    .toUpperCase()
+    .padStart(4, "0");
+
+  return `RCP-${year}-${sequence}-${suffix}`;
+}

@@ -1,5 +1,5 @@
 import { Category } from "@/generated/prisma/enums";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/clent-utils/utils";
 
 const styles: Record<Category, string> = {
   Tech: "bg-blue-500/15 text-blue-400 border-blue-500/20",
@@ -19,7 +19,7 @@ export function CategoryBadge({ category, className }: Props) {
       className={cn(
         "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
         styles[category],
-        className
+        className,
       )}
     >
       {category}

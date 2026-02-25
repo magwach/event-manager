@@ -20,6 +20,11 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "EventFlow — Event Manager",
   description: "Discover, track, and manage events with ease.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

@@ -175,7 +175,7 @@ export function AddEventDialog() {
       </button>
 
       {open && (
-        <div className="fixed top-50 inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed top-80 inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={handleClose}

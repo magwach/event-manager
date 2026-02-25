@@ -17,10 +17,17 @@ import {
   Info,
 } from "lucide-react";
 import { CategoryBadge } from "@/components/CategoryBadge";
-import { formatDate, isUpcoming } from "@/lib/utils";
-import { use } from "react";
-import { useGetEventDetails } from "@/hooks/use-events";
+import { formatDate, isUpcoming } from "@/lib/clent-utils/utils";
+import { use, useState } from "react";
+import {
+  useBookEvent,
+  useCheckBookingAvailability,
+  useGetEventDetails,
+} from "@/hooks/use-events";
 import { EventDetailSkeleton } from "@/components/EventDetailSkeleton";
+import { useClerk, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useGetUserProfile } from "@/hooks/use-users";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -28,12 +35,34 @@ interface Props {
 
 export default function EventDetailPage({ params }: Props) {
   const { id } = use(params);
+  const router = useRouter();
 
-  const { data: event, isError, isLoading } = useGetEventDetails(id);
+  const { user } = useUser();
+  const { openSignIn } = useClerk();
+
+  const [isRegistering, setIsRegistering] = useState(false);
+
+  const {
+    data: event,
+    isError: eventError,
+    isLoading,
+  } = useGetEventDetails(id);
+
+  const { refetch: checkAvailability } = useCheckBookingAvailability(id, {
+    enabled: false,
+  });
+
+  const { data: userData, isLoading: userLoading } = useGetUserProfile();
+
+  const { mutateAsync: bookEvent, isError: bookingError } = useBookEvent(
+    "Free - " + user?.id,
+    id,
+    user?.id!,
+  );
 
   if (isLoading) return <EventDetailSkeleton />;
 
-  if (!event || isError) notFound();
+  if (!event || eventError) notFound();
 
   const upcoming = isUpcoming(event.date);
   const isSoldOut = event.remainingCapacity <= 0;
@@ -44,16 +73,68 @@ export default function EventDetailPage({ params }: Props) {
       ? "Limited Spots"
       : "Available";
 
-  function handleRegister() {
+  const hasAlreadyBooked = userData?.bookedEvents.some(
+    (event: any) => event.eventId === id,
+  );
+  console.log(hasAlreadyBooked);
+
+  async function handleRegister() {
+    if (!user) {
+      openSignIn();
+      return;
+    }
+
     if (isSoldOut) {
       toast.error("This event is sold out.");
       return;
     }
 
-    toast.success("Successfully registered for event ", {
-      description: `You're registered for ${event!.title}`,
-      duration: 4000,
-    });
+    try {
+      setIsRegistering(true);
+      const { isError, data: event } = await checkAvailability();
+
+      if (isError) {
+        toast.error("Could not verify availability. Please try again.");
+        return;
+      }
+
+      if (!event || event?.remainingCapacity <= 0) {
+        toast.error("Sorry, this event just sold out.");
+        return;
+      }
+
+      if (event.price === 0) {
+        const booked = await bookEvent();
+        if (bookingError) {
+          toast.error("Failed to book slot");
+        }
+        router.replace(`/payment/success?session_id=${booked?.sessionId}`);
+        return;
+      }
+
+      const res = await fetch("/api/checkout/create", {
+        method: "POST",
+        body: JSON.stringify({
+          amount: event?.price,
+          productName: event?.title,
+          image: event?.image,
+          eventId: event?.id,
+          clerkId: user?.id,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error while booking event");
+    } finally {
+      setIsRegistering(false);
+    }
   }
 
   return (
@@ -135,11 +216,7 @@ export default function EventDetailPage({ params }: Props) {
                 value={formatDate(event.date)}
               />
 
-              <DetailRow
-                icon={Clock}
-                label="Time"
-                value={event.time}
-              />
+              <DetailRow icon={Clock} label="Time" value={event.time} />
 
               <DetailRow
                 icon={Timer}
@@ -218,18 +295,28 @@ export default function EventDetailPage({ params }: Props) {
 
             <button
               onClick={handleRegister}
-              disabled={!upcoming || isSoldOut}
+              disabled={
+                !upcoming ||
+                isSoldOut ||
+                isRegistering ||
+                userLoading ||
+                hasAlreadyBooked
+              }
               className={`w-full rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
-                upcoming && !isSoldOut
+                upcoming && !isSoldOut && !hasAlreadyBooked
                   ? "bg-amber-500 hover:bg-amber-400 text-[#0f0f11] hover:shadow-lg hover:shadow-amber-500/20 active:scale-[0.98]"
                   : "bg-[#2a2a35] text-[#4a4a52] cursor-not-allowed"
               }`}
             >
-              {isSoldOut
-                ? "Sold Out"
-                : upcoming
-                  ? "Register for Event"
-                  : "Registration Closed"}
+              {hasAlreadyBooked
+                ? "Already booked"
+                : isSoldOut
+                  ? "Sold Out"
+                  : upcoming
+                    ? isRegistering
+                      ? "Checking availability…"
+                      : "Register for Event"
+                    : "Registration Closed"}
             </button>
           </div>
         </div>

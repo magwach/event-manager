@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Search, SlidersHorizontal, Calendar } from "lucide-react";
 import { EventCard } from "@/components/EventCard";
-import { isUpcoming } from "@/lib/utils";
+import { isUpcoming } from "@/lib/clent-utils/utils";
 import type { Category } from "@/data/events";
 import { useGetAllEvents } from "@/hooks/use-events";
 import { EventCardSkeleton } from "@/components/EventCardSkeleton";

@@ -1,14 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import {
-  CalendarDays,
-  MapPin,
-  ArrowRight,
-  Clock,
-  Users,
-} from "lucide-react";
+import { CalendarDays, MapPin, ArrowRight, Clock, Users } from "lucide-react";
 import { CategoryBadge } from "@/components/CategoryBadge";
-import { formatDate, isUpcoming } from "@/lib/utils";
+import { formatDate, isUpcoming } from "@/lib/clent-utils/utils";
 import { Event } from "@/generated/prisma/client";
 
 interface Props {
@@ -124,21 +118,18 @@ export function EventCard({ event }: Props) {
                 isSoldOut
                   ? "text-rose-400"
                   : isAlmostFull
-                  ? "text-amber-400"
-                  : ""
+                    ? "text-amber-400"
+                    : ""
               }`}
             >
-              {isSoldOut
-                ? "Sold Out"
-                : `${event.remainingCapacity} seats left`}
+              {isSoldOut ? "Sold Out" : `${event.remainingCapacity} seats left`}
             </span>
           </div>
         </div>
 
         {/* Organizer */}
         <p className="text-[11px] text-[#4a4a52]">
-          Organized by{" "}
-          <span className="text-[#7c7a76]">{event.organizer}</span>
+          Organized by <span className="text-[#7c7a76]">{event.organizer}</span>
         </p>
 
         {/* Footer */}
