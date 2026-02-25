@@ -7,7 +7,6 @@ export function CancelError() {
   return (
     <div className="min-h-screen bg-[#0f0f11] px-4 py-12 flex items-center justify-center animate-fade-in">
       <div className="w-full max-w-md text-center">
-
         {/* Icon */}
         <div className="flex justify-center mb-5">
           <div className="relative">
@@ -22,7 +21,7 @@ export function CancelError() {
           Could not load event
         </h1>
         <p className="text-sm text-[#7c7a76] max-w-xs mx-auto leading-relaxed mb-8">
-          We couldn&apos;t fetch the event details. Your payment was not charged.
+          We couldn't fetch the event details. Your payment was not charged.
         </p>
 
         <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto">
@@ -41,7 +40,6 @@ export function CancelError() {
             Browse Events
           </Link>
         </div>
-
       </div>
     </div>
   );

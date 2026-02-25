@@ -342,7 +342,7 @@ function EmptyState() {
         No bookings yet
       </h3>
       <p className="text-sm text-[#7c7a76] max-w-xs mb-6">
-        You haven&apos;t booked any events yet. Explore what&apos;s happening
+        You haven't booked any events yet. Explore what's happening
         and secure your spot.
       </p>
       <Link

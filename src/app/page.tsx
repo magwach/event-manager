@@ -60,7 +60,7 @@ export default function HomePage() {
           </span>
         </div>
         <h1 className="font-syne text-4xl sm:text-5xl font-800 leading-tight text-[#e8e6e1] mb-3">
-          Discover What&apos;s <span className="text-amber-400">Happening</span>
+          Discover What's <span className="text-amber-400">Happening</span>
         </h1>
         <p className="text-[#7c7a76] text-lg max-w-xl">
           Browse, filter, and register for events across tech, sports, academia,

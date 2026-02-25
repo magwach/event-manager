@@ -23,7 +23,7 @@ export function PaymentError({ sessionId }: Props) {
             Something went wrong
           </h1>
           <p className="text-sm text-[#7c7a76] max-w-xs leading-relaxed">
-            We couldn&apos;t confirm your booking. Your payment may have been
+            We couldn't confirm your booking. Your payment may have been
             processed — please do not pay again before contacting support.
           </p>
         </div>

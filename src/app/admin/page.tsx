@@ -95,7 +95,7 @@ export default function AdminPage() {
                 Delete Event?
               </h2>
               <p className="text-sm text-[#7c7a76] leading-relaxed">
-                You&apos;re about to permanently delete{" "}
+                You're about to permanently delete{" "}
                 <span className="font-semibold text-[#e8e6e1]">
                   &ldquo;{pendingDelete?.title}&rdquo;
                 </span>

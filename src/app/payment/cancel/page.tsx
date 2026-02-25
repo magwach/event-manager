@@ -44,7 +44,7 @@ export default function CancelPage() {
           </h1>
           <p className="text-sm text-[#7c7a76] max-w-xs leading-relaxed">
             No charge was made. Your booking was not completed — you can try
-            again whenever you&apos;re ready.
+            again whenever you're ready.
           </p>
         </div>
 
@@ -94,7 +94,7 @@ export default function CancelPage() {
                 <span className="font-semibold text-amber-400">
                   {event?.remainingCapacity} spots
                 </span>{" "}
-                left — don&apos;t miss out.
+                left — don't miss out.
               </p>
             </div>
           )}
