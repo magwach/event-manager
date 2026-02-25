@@ -16,8 +16,7 @@ import {
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
-const ADMIN_EMAILS = JSON.parse(process.env.NEXT_PUBLIC_ADMIN_EMAILS!);
-
+const ADMIN_EMAILS = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",") ?? [];
 export function Navbar() {
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
