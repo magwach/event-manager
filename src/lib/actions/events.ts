@@ -45,8 +45,10 @@ export async function addEvent(event: any) {
         clerkId: user.id,
       },
     });
-    if (existingUser?.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL)
+    const ADMIN_EMAILS = JSON.parse(process.env.NEXT_PUBLIC_ADMIN_EMAILS!);
+    if (!ADMIN_EMAILS.includes(existingUser?.email))
       throw new Error("Unauthorized");
+
     let uploadedImage;
 
     try {
@@ -93,7 +95,8 @@ export async function editEvent(event: Event) {
         clerkId: user.id,
       },
     });
-    if (existingUser?.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL)
+    const ADMIN_EMAILS = JSON.parse(process.env.NEXT_PUBLIC_ADMIN_EMAILS!);
+    if (!ADMIN_EMAILS.includes(existingUser?.email))
       throw new Error("Unauthorized");
 
     const existingEvent = await prisma.event.findUnique({
@@ -194,7 +197,8 @@ export async function deleteEvent(eventId: string) {
         clerkId: user.id,
       },
     });
-    if (existingUser?.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL)
+    const ADMIN_EMAILS = JSON.parse(process.env.NEXT_PUBLIC_ADMIN_EMAILS!);
+    if (!ADMIN_EMAILS.includes(existingUser?.email))
       throw new Error("Unauthorized");
 
     const existingEvent = await prisma.event.findUnique({

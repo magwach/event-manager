@@ -32,7 +32,7 @@ export default function AdminPage() {
 
   const { mutate: deleteEvent, isPending } = useDeleteEvent();
 
-  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  const ADMIN_EMAILS = JSON.parse(process.env.NEXT_PUBLIC_ADMIN_EMAILS!);
 
   function requestDelete(event: Event) {
     setPendingDelete(event);
@@ -62,7 +62,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isLoaded) return;
     const email = user?.primaryEmailAddress?.emailAddress;
-    if (!user || email !== ADMIN_EMAIL) {
+    if (!user || !ADMIN_EMAILS.includes(email)) {
       toast.error("Access denied. Admins only.");
       router.replace("/");
     }

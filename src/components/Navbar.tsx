@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+const ADMIN_EMAILS = JSON.parse(process.env.NEXT_PUBLIC_ADMIN_EMAILS!);
 
 export function Navbar() {
   const pathname = usePathname();
@@ -26,7 +26,7 @@ export function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const userEmail = user?.primaryEmailAddress?.emailAddress;
-  const isAdmin = isLoaded && !!userEmail && userEmail === ADMIN_EMAIL;
+  const isAdmin = isLoaded && !!userEmail && ADMIN_EMAILS.includes(userEmail);
 
   // Close dropdown on outside click
   useEffect(() => {
