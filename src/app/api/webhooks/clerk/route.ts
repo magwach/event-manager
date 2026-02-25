@@ -32,10 +32,18 @@ export async function POST(req: Request) {
   const eventType = evt.type;
 
   if (eventType === "user.created") {
-    await prisma.user.create({
-      data: {
+    await prisma.user.upsert({
+      where: { email: evt.data.email_addresses?.[0]?.email_address! },
+      update: {
         clerkId: evt.data.id,
-        email: evt.data.email_addresses?.[0]?.email_address,
+        firstName: evt.data.first_name,
+        lastName: evt.data.last_name,
+        phone: evt.data.phone_numbers?.[0]?.phone_number ?? null,
+        profileImage: evt.data.image_url,
+      },
+      create: {
+        clerkId: evt.data.id,
+        email: evt.data.email_addresses?.[0]?.email_address!,
         firstName: evt.data.first_name,
         lastName: evt.data.last_name,
         phone: evt.data.phone_numbers?.[0]?.phone_number ?? null,
