@@ -28,6 +28,8 @@ export default function ProfilePage() {
 
   const { data: profile, isLoading } = useGetUserProfile();
 
+  console.log(profile)
+
   const upcomingCount =
     profile?.bookedEvents.filter((b: any) =>
       isUpcoming(b.event.date.toString()),

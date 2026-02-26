@@ -7,6 +7,8 @@ export async function getUserProfile() {
     const user = await currentUser();
     if (!user) throw new Error("User not found");
 
+    console.log(user.id);
+
     const existingUser = await prisma.user.findUnique({
       where: {
         clerkId: user.id,

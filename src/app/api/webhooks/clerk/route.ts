@@ -32,24 +32,30 @@ export async function POST(req: Request) {
   const eventType = evt.type;
 
   if (eventType === "user.created") {
-    await prisma.user.upsert({
-      where: { email: evt.data.email_addresses?.[0]?.email_address! },
-      update: {
-        clerkId: evt.data.id,
-        firstName: evt.data.first_name,
-        lastName: evt.data.last_name,
-        phone: evt.data.phone_numbers?.[0]?.phone_number ?? null,
-        profileImage: evt.data.image_url,
-      },
-      create: {
-        clerkId: evt.data.id,
-        email: evt.data.email_addresses?.[0]?.email_address!,
-        firstName: evt.data.first_name,
-        lastName: evt.data.last_name,
-        phone: evt.data.phone_numbers?.[0]?.phone_number ?? null,
-        profileImage: evt.data.image_url,
-      },
-    });
+    try {
+      console.log("hit");
+      await prisma.user.upsert({
+        where: { email: evt.data.email_addresses?.[0]?.email_address! },
+        update: {
+          clerkId: evt.data.id,
+          firstName: evt.data.first_name,
+          lastName: evt.data.last_name,
+          phone: evt.data.phone_numbers?.[0]?.phone_number ?? null,
+          profileImage: evt.data.image_url,
+        },
+        create: {
+          clerkId: evt.data.id,
+          email: evt.data.email_addresses?.[0]?.email_address!,
+          firstName: evt.data.first_name,
+          lastName: evt.data.last_name,
+          phone: evt.data.phone_numbers?.[0]?.phone_number ?? null,
+          profileImage: evt.data.image_url,
+        },
+      });
+    } catch (error) {
+      console.error("DB ERROR:", error);
+      return new Response("Database error", { status: 500 });
+    }
   }
   return new Response("Webhook received", { status: 200 });
 }
