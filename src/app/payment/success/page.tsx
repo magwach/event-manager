@@ -43,6 +43,10 @@ export default function SuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = searchParams.get("session_id");
+  const payment = searchParams.get("payment");
+  const eventId = searchParams.get("eventId");
+  const clerkId = searchParams.get("clerkId");
+
   const [stage, setStage] = useState<Stage>("verifying");
   const [error, setError] = useState(false);
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -54,6 +58,9 @@ export default function SuccessPage() {
       method: "POST",
       body: JSON.stringify({
         sessionId,
+        eventId,
+        payment,
+        clerkId,
       }),
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -72,7 +79,10 @@ export default function SuccessPage() {
       router.replace("/");
       return;
     }
-    const t1 = setTimeout(() => setStage("generating"), 4200);
+    const t1 = setTimeout(
+      () => setStage("generating"),
+      booking?.price === 0 ? 0 : 4200,
+    );
 
     return () => {
       clearTimeout(t1);
@@ -167,7 +177,10 @@ export default function SuccessPage() {
 
             {/* Event details */}
             <div className="space-y-2 pt-3 border-t border-[#2a2a35]">
-              <Row icon={CalendarDays} value={booking ? new Date(booking.date).toDateString() : ""} />
+              <Row
+                icon={CalendarDays}
+                value={booking ? new Date(booking.date).toDateString() : ""}
+              />
               <Row icon={Clock} value={booking?.time!} />
               <Row icon={MapPin} value={booking?.location!} />
             </div>

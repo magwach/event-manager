@@ -16,6 +16,8 @@ export default function LandingPage() {
     }
   }, [isLoaded, user, router]);
 
+  if (!isLoaded || user) return null;
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0f0f11] text-[#e8e6e1]">
       {/* ── Hero ─────────────────────────────────────────────────────── */}

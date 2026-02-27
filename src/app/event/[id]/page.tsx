@@ -76,7 +76,6 @@ export default function EventDetailPage({ params }: Props) {
   const hasAlreadyBooked = userData?.bookedEvents.some(
     (event: any) => event.eventId === id,
   );
-  console.log(hasAlreadyBooked);
 
   async function handleRegister() {
     if (!user) {
@@ -108,7 +107,9 @@ export default function EventDetailPage({ params }: Props) {
         if (bookingError) {
           toast.error("Failed to book slot");
         }
-        router.replace(`/payment/success?session_id=${booked?.sessionId}`);
+        router.replace(
+          `/payment/success?session_id=${booked?.sessionId}&payment=free&eventId=${id}&clerkId=${user.id}`,
+        );
         return;
       }
 
