@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const { sessionId, payment, eventId, clerkId } = await req.json();
+    console.log(payment, eventId, clerkId);
 
     if (!sessionId) {
       return NextResponse.json(
