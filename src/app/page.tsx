@@ -1,14 +1,11 @@
 import Link from "next/link";
-import { Calendar, Search, Users, Zap, ArrowRight, MapPin, Tag } from "lucide-react";
-
+import { Calendar, Search, Users, Zap, ArrowRight, Tag } from "lucide-react";
 
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#0f0f11] text-[#e8e6e1]">
-
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section className="flex-1 flex flex-col items-center justify-center text-center px-4 py-24 relative overflow-hidden">
-        {/* Background glow */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-amber-500/5 blur-3xl" />
         </div>
@@ -22,15 +19,14 @@ export default function LandingPage() {
           </div>
 
           <h1 className="font-syne text-5xl sm:text-6xl font-bold leading-tight text-[#e8e6e1] mb-6">
-            Discover & Manage{" "}
-            <span className="text-amber-400">Events</span>{" "}
+            Discover & Manage <span className="text-amber-400">Events</span>{" "}
             That Matter
           </h1>
 
           <p className="text-[#7c7a76] text-lg max-w-xl mx-auto mb-10 leading-relaxed">
             EventManager is a platform for discovering, registering, and
-            managing events across tech, sports, academia, and social
-            gatherings — all in one place.
+            managing events across tech, sports, academia, and social gatherings
+            — all in one place.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -96,25 +92,44 @@ export default function LandingPage() {
             How it works
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            <Step number="01" title="Create an Account" description="Sign up with your Google account or email in seconds." />
-            <Step number="02" title="Browse Events" description="Explore upcoming events filtered by your interests and location." />
-            <Step number="03" title="Register & Attend" description="Register for events, get confirmation, and show up." />
+            <Step
+              number="01"
+              title="Create an Account"
+              description="Sign up with your Google account or email in seconds."
+            />
+            <Step
+              number="02"
+              title="Browse Events"
+              description="Explore upcoming events filtered by your interests and location."
+            />
+            <Step
+              number="03"
+              title="Register & Attend"
+              description="Register for events, get confirmation, and show up."
+            />
           </div>
         </div>
       </section>
 
-      {/* ── Data Usage Notice (required by Google) ───────────────────── */}
+      {/* ── Data Usage + Privacy Policy (required by Google) ─────────── */}
       <section className="border-t border-[#2a2a35] py-12 px-4">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="font-syne text-xl font-bold text-[#e8e6e1] mb-3">
             How we use your Google data
           </h2>
-          <p className="text-[#7c7a76] text-sm leading-relaxed max-w-xl mx-auto">
+          <p className="text-[#7c7a76] text-sm leading-relaxed max-w-xl mx-auto mb-6">
             When you sign in with Google, EventManager uses your name, email
             address, and profile picture solely to create and manage your
-            account. We do not share your data with third parties or use it
-            for advertising purposes.
+            account. We do not share your data with third parties or use it for
+            advertising purposes.
           </p>
+          {/* Prominent Privacy Policy link — required by Google verification */}
+          <Link
+            href="/policy"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-400 hover:bg-amber-500/20 transition-colors"
+          >
+            Read our Privacy Policy →
+          </Link>
         </div>
       </section>
 
@@ -164,7 +179,9 @@ function FeatureCard({
       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20">
         <Icon className="h-5 w-5 text-amber-400" />
       </div>
-      <h3 className="font-syne text-sm font-semibold text-[#e8e6e1]">{title}</h3>
+      <h3 className="font-syne text-sm font-semibold text-[#e8e6e1]">
+        {title}
+      </h3>
       <p className="text-xs text-[#7c7a76] leading-relaxed">{description}</p>
     </div>
   );
@@ -181,8 +198,12 @@ function Step({
 }) {
   return (
     <div className="space-y-3">
-      <div className="font-syne text-3xl font-bold text-amber-500/30">{number}</div>
-      <h3 className="font-syne text-base font-semibold text-[#e8e6e1]">{title}</h3>
+      <div className="font-syne text-3xl font-bold text-amber-500/30">
+        {number}
+      </div>
+      <h3 className="font-syne text-base font-semibold text-[#e8e6e1]">
+        {title}
+      </h3>
       <p className="text-sm text-[#7c7a76] leading-relaxed">{description}</p>
     </div>
   );
