@@ -1,7 +1,21 @@
+"use client";
+
 import Link from "next/link";
 import { Calendar, Search, Users, Zap, ArrowRight, Tag } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function LandingPage() {
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      router.replace("/events");
+    }
+  }, [isLoaded, user, router]);
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0f0f11] text-[#e8e6e1]">
       {/* ── Hero ─────────────────────────────────────────────────────── */}
@@ -123,7 +137,6 @@ export default function LandingPage() {
             account. We do not share your data with third parties or use it for
             advertising purposes.
           </p>
-          {/* Prominent Privacy Policy link — required by Google verification */}
           <Link
             href="/policy"
             className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-400 hover:bg-amber-500/20 transition-colors"
