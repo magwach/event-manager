@@ -179,7 +179,7 @@ export default function HomePage() {
               Privacy Policy
             </Link>
             <Link
-              href="/terms"
+              href="/terms-of-service"
               className="text-xs text-[#4a4a52] hover:text-amber-400 transition-colors"
             >
               Terms of Service
