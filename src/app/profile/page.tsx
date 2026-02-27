@@ -313,7 +313,7 @@ function BookedEventCard({
         </p>
         <div className="mt-2 flex flex-col gap-2">
           <Link
-            href={`/events/${event.id}`}
+            href={`/event/${event.id}`}
             className="flex items-center justify-center rounded-xl border border-[#2a2a35] hover:border-amber-500/30 bg-[#1e1e24] hover:bg-amber-500/10 px-3 py-2 text-xs font-medium text-[#e8e6e1] hover:text-amber-400 transition-all"
           >
             View Event Details

@@ -135,7 +135,7 @@ export function EventCard({ event }: Props) {
         {/* Footer */}
         <div className="pt-2 border-t border-[#2a2a35]">
           <Link
-            href={`/events/${event.id}`}
+            href={`/event/${event.id}`}
             className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#1e1e24] hover:bg-amber-500/10 border border-[#2a2a35] hover:border-amber-500/30 px-4 py-2.5 text-sm font-medium text-[#e8e6e1] hover:text-amber-400 transition-all duration-200 group/btn"
           >
             View Details

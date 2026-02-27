@@ -103,7 +103,7 @@ export default function CancelPage() {
         {/* Actions */}
         <div className="space-y-3">
           <button
-            onClick={() => router.push(`/events/${eventId}`)}
+            onClick={() => router.push(`/event/${eventId}`)}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 px-5 py-3 text-sm font-bold text-[#0f0f11] transition-colors"
           >
             <RotateCcw className="h-4 w-4" />
@@ -112,7 +112,7 @@ export default function CancelPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <Link
-              href={`/events/${eventId}`}
+              href={`/${eventId}`}
               className="flex items-center justify-center gap-2 rounded-xl border border-[#2a2a35] bg-transparent px-4 py-2.5 text-xs font-medium text-[#7c7a76] hover:bg-[#1e1e24] hover:text-[#e8e6e1] transition-all"
             >
               <Ticket className="h-3.5 w-3.5" />

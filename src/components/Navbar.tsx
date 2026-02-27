@@ -17,17 +17,17 @@ import {
 import { useState, useRef, useEffect } from "react";
 
 const ADMIN_EMAILS = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",") ?? [];
+
 export function Navbar() {
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
-  const { signOut, openSignIn } = useClerk();
+  const { signOut } = useClerk();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const userEmail = user?.primaryEmailAddress?.emailAddress;
   const isAdmin = isLoaded && !!userEmail && ADMIN_EMAILS.includes(userEmail);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
@@ -42,7 +42,7 @@ export function Navbar() {
   }, []);
 
   const navLinks = [
-    { href: "/", label: "Home", icon: Calendar },
+    { href: "/events", label: "Events", icon: Calendar },
     ...(isAdmin
       ? [{ href: "/admin", label: "Admin", icon: LayoutDashboard }]
       : []),
@@ -53,7 +53,7 @@ export function Navbar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
           {/* ── Logo ── */}
-          <Link href="/" className="flex items-center gap-2 group shrink-0">
+          <Link href="/events" className="flex items-center gap-2 group shrink-0">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-[#0f0f11] transition-transform group-hover:scale-110">
               <Zap className="h-4 w-4 fill-current" />
             </div>
@@ -87,16 +87,14 @@ export function Navbar() {
           {/* ── Auth Area ── */}
           <div className="flex items-center gap-2 shrink-0">
             {!isLoaded ? (
-              // Loading skeleton
               <div className="h-8 w-24 rounded-lg bg-[#2a2a35] animate-pulse" />
             ) : user ? (
-              // ── User dropdown ──
+              /* ── User dropdown ── */
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen((o) => !o)}
                   className="flex items-center gap-2 rounded-xl border border-[#2a2a35] bg-[#16161a] px-3 py-1.5 text-sm text-[#e8e6e1] hover:border-amber-500/30 hover:bg-[#1e1e24] transition-all"
                 >
-                  {/* Avatar */}
                   {user.imageUrl ? (
                     <div className="relative h-6 w-6 rounded-lg overflow-hidden">
                       <Image
@@ -122,10 +120,8 @@ export function Navbar() {
                   />
                 </button>
 
-                {/* Dropdown menu */}
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-[#2a2a35] bg-[#16161a] shadow-xl shadow-black/40 overflow-hidden">
-                    {/* User info header */}
                     <div className="px-4 py-3 border-b border-[#2a2a35]">
                       <p className="text-xs font-medium text-[#e8e6e1] truncate">
                         {user.firstName} {user.lastName}
@@ -141,7 +137,6 @@ export function Navbar() {
                       )}
                     </div>
 
-                    {/* Menu items */}
                     <div className="py-1">
                       <Link
                         href="/profile"
@@ -174,7 +169,6 @@ export function Navbar() {
                       )}
                     </div>
 
-                    {/* Sign out */}
                     <div className="border-t border-[#2a2a35] py-1">
                       <button
                         onClick={() => {
@@ -191,14 +185,22 @@ export function Navbar() {
                 )}
               </div>
             ) : (
-              // ── Sign In button ──
-              <button
-                onClick={() => openSignIn()}
-                className="flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 px-4 py-2 text-sm font-semibold text-[#0f0f11] transition-colors"
-              >
-                <LogIn className="h-4 w-4" />
-                <span>Sign In</span>
-              </button>
+              /* ── Sign In + Sign Up buttons ── */
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/sign-in"
+                  className="flex items-center gap-2 rounded-xl border border-[#2a2a35] bg-transparent hover:bg-[#16161a] px-4 py-2 text-sm font-medium text-[#7c7a76] hover:text-[#e8e6e1] transition-all"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>Sign In</span>
+                </Link>
+                <Link
+                  href="/sign-up"
+                  className="flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 px-4 py-2 text-sm font-semibold text-[#0f0f11] transition-colors"
+                >
+                  <span>Sign Up</span>
+                </Link>
+              </div>
             )}
           </div>
         </div>
