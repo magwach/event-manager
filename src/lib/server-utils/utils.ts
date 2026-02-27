@@ -1,12 +1,12 @@
 "use server";
 
 import path from "path";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import cloudinary from "../cloudinary";
 import fs from "fs";
 import Handlebars from "handlebars";
 import QRCode from "qrcode";
-
 
 export async function generateReceipt(
   booking: any,
@@ -53,17 +53,23 @@ export async function generateReceipt(
     qrDataUrl,
   });
 
-  const browser = await puppeteer.launch({ headless: true });
+  // Use @sparticuz/chromium for Vercel compatibility
+  const executablePath = await chromium.executablePath();
+
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: { width: 1280, height: 720 },
+    executablePath,
+    headless: true,
+  });
+
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });
   const pdf = await page.pdf({ format: "A4", printBackground: true });
   await browser.close();
 
-  const filePath = path.join(
-    process.cwd(),
-    `src/lib/templates/receipt-${booking.receiptId}`,
-  );
-
+  // Use /tmp for Vercel (read-only filesystem except /tmp)
+  const filePath = path.join("/tmp", `receipt-${booking.receiptId}.pdf`);
   fs.writeFileSync(filePath, pdf);
 
   const uploadResponse = await cloudinary.uploader.upload(filePath, {
