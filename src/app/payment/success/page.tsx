@@ -53,10 +53,6 @@ export default function SuccessPage() {
 
   const hasCalled = useRef(false);
 
-  if (payment === "free") {
-    setStage("generating");
-  }
-
   const addBooking = async () => {
     const res = await fetch("/api/checkout/success", {
       method: "POST",
@@ -98,6 +94,12 @@ export default function SuccessPage() {
     hasCalled.current = true;
     addBooking();
   }, [sessionId]);
+
+  useEffect(() => {
+    if (payment === "free") {
+      setStage("generating");
+    }
+  }, [payment]);
 
   if (error) return <PaymentError sessionId={sessionId} />;
 

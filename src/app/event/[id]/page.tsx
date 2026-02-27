@@ -24,7 +24,6 @@ import {
 } from "@/lib/clent-utils/utils";
 import { use, useState } from "react";
 import {
-  useBookEvent,
   useCheckBookingAvailability,
   useGetEventDetails,
 } from "@/hooks/use-events";
@@ -57,12 +56,6 @@ export default function EventDetailPage({ params }: Props) {
   });
 
   const { data: userData, isLoading: userLoading } = useGetUserProfile();
-
-  const { mutateAsync: bookEvent, isError: bookingError } = useBookEvent(
-    "Free - " + user?.id,
-    id,
-    user?.id!,
-  );
 
   if (isLoading) return <EventDetailSkeleton />;
 
@@ -138,6 +131,8 @@ export default function EventDetailPage({ params }: Props) {
       setIsRegistering(false);
     }
   }
+
+  
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
