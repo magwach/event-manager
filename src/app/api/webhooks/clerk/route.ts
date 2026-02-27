@@ -35,23 +35,14 @@ export async function POST(req: Request) {
 
   if (eventType === "user.created") {
     try {
-      console.log("hit");
-      await prisma.user.upsert({
-        where: { email: evt.data.email_addresses?.[0]?.email_address! },
-        update: {
+      await prisma.user.create({
+        data: {
           clerkId: evt.data.id,
-          firstName: evt.data.first_name,
-          lastName: evt.data.last_name,
+          email: evt.data.email_addresses?.[0]?.email_address ?? null,
+          firstName: evt.data?.first_name ?? null,
+          lastName: evt.data?.last_name ?? null,
           phone: evt.data.phone_numbers?.[0]?.phone_number ?? null,
-          profileImage: evt.data.image_url,
-        },
-        create: {
-          clerkId: evt.data.id,
-          email: evt.data.email_addresses?.[0]?.email_address!,
-          firstName: evt.data.first_name,
-          lastName: evt.data.last_name,
-          phone: evt.data.phone_numbers?.[0]?.phone_number ?? null,
-          profileImage: evt.data.image_url,
+          profileImage: evt.data?.image_url ?? null,
         },
       });
     } catch (error) {
