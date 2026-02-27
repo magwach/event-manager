@@ -17,7 +17,11 @@ import {
   Info,
 } from "lucide-react";
 import { CategoryBadge } from "@/components/CategoryBadge";
-import { formatDate, isUpcoming } from "@/lib/clent-utils/utils";
+import {
+  formatDate,
+  generateSessionId,
+  isUpcoming,
+} from "@/lib/clent-utils/utils";
 import { use, useState } from "react";
 import {
   useBookEvent,
@@ -103,12 +107,9 @@ export default function EventDetailPage({ params }: Props) {
       }
 
       if (event.price === 0) {
-        const booked = await bookEvent();
-        if (bookingError) {
-          toast.error("Failed to book slot");
-        }
+        const sessionId = generateSessionId();
         router.replace(
-          `/payment/success?session_id=${booked?.sessionId}&payment=free&eventId=${id}&clerkId=${user.id}`,
+          `/payment/success?session_id=${sessionId}&payment=free&eventId=${id}&clerkId=${user.id}`,
         );
         return;
       }

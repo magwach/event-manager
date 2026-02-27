@@ -53,6 +53,10 @@ export default function SuccessPage() {
 
   const hasCalled = useRef(false);
 
+  if (payment === "free") {
+    setStage("generating");
+  }
+
   const addBooking = async () => {
     const res = await fetch("/api/checkout/success", {
       method: "POST",
@@ -79,11 +83,10 @@ export default function SuccessPage() {
       router.replace("/");
       return;
     }
-    const t1 = setTimeout(
-      () => setStage("generating"),
-      booking?.price === 0 ? 0 : 4200,
-    );
-
+    let t1: any;
+    if (payment === "free") {
+      t1 = setTimeout(() => setStage("generating"), 4200);
+    }
     return () => {
       clearTimeout(t1);
     };

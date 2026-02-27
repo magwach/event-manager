@@ -40,3 +40,16 @@ export function generateReceiptId(): string {
 
   return `RCP-${year}-${sequence}-${suffix}`;
 }
+
+export function generateSessionId(): string {
+  const timestamp = Date.now().toString(36);
+  const random1 = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const random2 = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const random3 = crypto
+    .randomUUID()
+    .replace(/-/g, "")
+    .substring(0, 8)
+    .toUpperCase();
+
+  return `Free-${timestamp}-${random1}-${random2}-${random3}`;
+}
