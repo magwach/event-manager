@@ -62,7 +62,7 @@ export default function CancelPage() {
               <p className="font-syne font-semibold text-[#e8e6e1] text-sm leading-snug">
                 {event?.title}
               </p>
-              <span className="inline-flex items-center mt-1 rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+              <span className="inline-flex items-c  enter mt-1 rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
                 {event?.category}
               </span>
             </div>

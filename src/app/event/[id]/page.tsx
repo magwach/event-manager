@@ -120,7 +120,7 @@ export default function EventDetailPage({ params }: Props) {
       });
 
       const data = await res.json();
-
+ 
       if (data.url) {
         window.location.href = data.url;
       }
@@ -129,8 +129,8 @@ export default function EventDetailPage({ params }: Props) {
       toast.error("Error while booking event");
     } finally {
       setIsRegistering(false);
-    }
-  }
+    } 
+  }  
 
   
 
