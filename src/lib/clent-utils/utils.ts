@@ -53,3 +53,12 @@ export function generateSessionId(): string {
 
   return `Free-${timestamp}-${random1}-${random2}-${random3}`;
 }
+
+export function formatMonthYear(date: Date): string {
+  return date.toLocaleString("default", { month: "long", year: "numeric" });
+}
+
+export function getMonthYearKey(dateStr: string): string {
+  const date = new Date(dateStr);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}

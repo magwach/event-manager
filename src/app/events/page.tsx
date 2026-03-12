@@ -3,13 +3,11 @@
 import { useState, useMemo } from "react";
 import { Search, SlidersHorizontal, Calendar } from "lucide-react";
 import { EventCard } from "@/components/EventCard";
-import { isUpcoming } from "@/lib/clent-utils/utils";
 import type { Category } from "@/data/events";
 import { useGetAllEvents } from "@/hooks/use-events";
 import { EventCardSkeleton } from "@/components/EventCardSkeleton";
 import Link from "next/link";
-
-type DateFilter = "all" | "upcoming" | "past";
+import { formatMonthYear, getMonthYearKey } from "@/lib/clent-utils/utils";
 
 const CATEGORIES: Array<{ value: string; label: string }> = [
   { value: "all", label: "All Categories" },
@@ -19,18 +17,32 @@ const CATEGORIES: Array<{ value: string; label: string }> = [
   { value: "Social", label: "Social" },
 ];
 
-const DATE_FILTERS: Array<{ value: DateFilter; label: string }> = [
-  { value: "all", label: "All Dates" },
-  { value: "upcoming", label: "Upcoming" },
-  { value: "past", label: "Past" },
-];
 
 export default function HomePage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
+  const [monthFilter, setMonthFilter] = useState("all");
 
   const { data: events = [], isLoading } = useGetAllEvents();
+
+  const monthOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const options: Array<{ value: string; label: string }> = [];
+
+    events.forEach((event: any) => {
+      const key = getMonthYearKey(event.date);
+      if (!seen.has(key)) {
+        seen.add(key);
+        const date = new Date(event.date);
+        options.push({ value: key, label: formatMonthYear(date) });
+      }
+    });
+
+    // Sort descending (most recent first)
+    options.sort((a, b) => b.value.localeCompare(a.value));
+
+    return [{ value: "all", label: "All Months" }, ...options];
+  }, [events]);
 
   const filtered = useMemo(() => {
     return events?.filter((event: any) => {
@@ -39,13 +51,11 @@ export default function HomePage() {
         .includes(search.toLowerCase());
       const matchCategory =
         category === "all" || event?.category === (category as Category);
-      const matchDate =
-        dateFilter === "all" ||
-        (dateFilter === "upcoming" && isUpcoming(event.date)) ||
-        (dateFilter === "past" && !isUpcoming(event.date));
-      return matchSearch && matchCategory && matchDate;
+      const matchMonth =
+        monthFilter === "all" || getMonthYearKey(event.date) === monthFilter;
+      return matchSearch && matchCategory && matchMonth;
     });
-  }, [search, category, dateFilter, events]);
+  }, [search, category, monthFilter, events]);
 
   const selectClass =
     "rounded-xl border border-[#2a2a35] bg-[#16161a] px-3 py-2.5 text-sm text-[#e8e6e1] focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all appearance-none cursor-pointer pr-8";
@@ -100,17 +110,17 @@ export default function HomePage() {
             </select>
           </div>
 
-          {/* Date filter */}
+          {/* Month/Year filter */}
           <div className="relative">
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4a4a52] pointer-events-none" />
             <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
               className={`${selectClass} pl-9`}
             >
-              {DATE_FILTERS.map((d) => (
-                <option key={d.value} value={d.value} className="bg-[#16161a]">
-                  {d.label}
+              {monthOptions.map((m) => (
+                <option key={m.value} value={m.value} className="bg-[#16161a]">
+                  {m.label}
                 </option>
               ))}
             </select>
@@ -155,7 +165,7 @@ export default function HomePage() {
               onClick={() => {
                 setSearch("");
                 setCategory("all");
-                setDateFilter("all");
+                setMonthFilter("all");
               }}
               className="mt-4 rounded-xl border border-[#2a2a35] px-4 py-2 text-sm text-[#7c7a76] hover:bg-[#16161a] hover:text-[#e8e6e1] transition-all"
             >
