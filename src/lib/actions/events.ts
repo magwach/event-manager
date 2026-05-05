@@ -326,3 +326,51 @@ export async function bookEvent(
     throw new Error("Error while booking event");
   }
 }
+
+export async function cancelEvent(
+  eventId: string,
+  clerkId: string,
+  bookedEventId: string,
+) {
+  try {
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        clerkId,
+      },
+    });
+
+    if (!existingUser) throw new Error("User not found");
+
+    const existingEvent = await prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    });
+
+    if (!existingEvent) throw new Error("Couldn't find the event");
+    const existingBookedEvent = await prisma.bookedEvents.findUnique({
+      where: {
+        id: bookedEventId,
+      },
+    });
+    if (!existingBookedEvent) throw new Error("Couldn't find the event");
+    await prisma.bookedEvents.delete({
+      where: {
+        id: bookedEventId,
+      },
+    });
+
+    await prisma.event.update({
+      where: {
+        id: existingEvent.id,
+      },
+      data: {
+        remainingCapacity: existingEvent.remainingCapacity + 1,
+      },
+    })
+    return existingBookedEvent;
+  } catch (error) {
+    console.error("Error while cancelling event", error);
+    throw new Error("Error while cancelling event");
+  }
+}

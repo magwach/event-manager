@@ -12,23 +12,24 @@ import {
   Shield,
   Clock,
   Receipt,
-  User,
   TrendingUp,
+  AlertTriangle,
+  X,
+  Ban,
 } from "lucide-react";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { formatDate, isUpcoming } from "@/lib/clent-utils/utils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGetUserProfile } from "@/hooks/use-users";
 import { ProfileSkeleton } from "@/components/ProfileLoader";
+import { useCancelEventBooking } from "@/hooks/use-events";
 
 export default function ProfilePage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
 
   const { data: profile, isLoading } = useGetUserProfile();
-
-  console.log(profile)
 
   const upcomingCount =
     profile?.bookedEvents.filter((b: any) =>
@@ -226,6 +227,116 @@ function StatCard({
   );
 }
 
+// ─── Cancel Confirmation Modal ───────────────────────────────────────────────
+
+function CancelModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  eventTitle,
+  eventPrice,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  eventTitle: string;
+  eventPrice: number;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-[#2a2a35] bg-[#16161a] shadow-2xl shadow-black/50 overflow-hidden">
+          {/* Top accent bar */}
+          <div className="h-1 w-full bg-gradient-to-r from-red-600/60 via-red-500/80 to-red-600/60" />
+
+          <div className="p-6">
+            {/* Header row */}
+            <div className="flex items-start justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 border border-red-500/20">
+                  <Ban className="h-5 w-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-syne text-base font-bold text-[#e8e6e1]">
+                    Cancel Booking
+                  </h3>
+                  <p className="text-xs text-[#4a4a52] mt-0.5">
+                    This action cannot be undone
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1e1e24] border border-[#2a2a35] text-[#4a4a52] hover:text-[#e8e6e1] hover:border-[#3a3a40] transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {/* Event info pill */}
+            <div className="mb-5 rounded-xl border border-[#2a2a35] bg-[#1e1e24] px-4 py-3">
+              <p className="text-xs text-[#4a4a52] mb-1">
+                Cancelling booking for
+              </p>
+              <p className="font-syne text-sm font-semibold text-[#e8e6e1] line-clamp-1">
+                {eventTitle}
+              </p>
+              <p className="text-xs text-amber-400/70 mt-1">
+                KES {eventPrice.toLocaleString()}
+              </p>
+            </div>
+
+            {/* Warning box */}
+            <div className="mb-6 flex gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3.5">
+              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-amber-400">
+                  No refund will be issued
+                </p>
+                <p className="text-xs text-[#7c7a76] leading-relaxed">
+                  Cancelling this booking is permanent and{" "}
+                  <span className="text-amber-400/80 font-medium">
+                    your payment of KES {eventPrice.toLocaleString()} will not
+                    be refunded.
+                  </span>{" "}
+                  Please make sure you want to proceed before confirming.
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 rounded-xl border border-[#2a2a35] bg-[#1e1e24] hover:border-[#3a3a40] px-4 py-2.5 text-sm font-medium text-[#7c7a76] hover:text-[#e8e6e1] transition-all"
+              >
+                Keep Booking
+              </button>
+              <button
+                onClick={onConfirm}
+                className="flex-1 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 px-4 py-2.5 text-sm font-semibold text-red-400 hover:text-red-300 transition-all"
+              >
+                Yes, Cancel It
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Booked Event Card ────────────────────────────────────────────────────────
+
 function BookedEventCard({
   booking,
 }: {
@@ -238,99 +349,137 @@ function BookedEventCard({
   };
 }) {
   const { event, receipt, receiptId, createdAt } = booking;
+  const { user } = useUser();
   const upcoming = isUpcoming(event.date.toString());
 
+  const { mutate, isPending } = useCancelEventBooking(
+    event?.id,
+    user?.id!,
+    booking.id,
+  );
+
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
+  const handleCancelConfirm = () => {
+    mutate();
+    setShowCancelModal(false);
+  };
+
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-[#2a2a35] bg-[#16161a] card-hover">
-      {/* Image */}
-      <div className="relative h-40 overflow-hidden">
-        <Image
-          src={event.image}
-          alt={event.title}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, 33vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#16161a] via-transparent to-transparent" />
+    <>
+      <CancelModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleCancelConfirm}
+        eventTitle={event.title}
+        eventPrice={event.price}
+      />
 
-        {/* Status pill */}
-        <div className="absolute top-3 right-3">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
-              upcoming
-                ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                : "bg-[#2a2a35] text-[#7c7a76] border border-[#3a3a40]"
-            }`}
-          >
+      <div className="group flex flex-col overflow-hidden rounded-2xl border border-[#2a2a35] bg-[#16161a] card-hover">
+        {/* Image */}
+        <div className="relative h-40 overflow-hidden">
+          <Image
+            src={event.image}
+            alt={event.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 33vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#16161a] via-transparent to-transparent" />
+
+          {/* Status pill */}
+          <div className="absolute top-3 right-3">
             <span
-              className={`h-1.5 w-1.5 rounded-full ${upcoming ? "bg-amber-400" : "bg-[#7c7a76]"}`}
-            />
-            {upcoming ? "Upcoming" : "Attended"}
-          </span>
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+                upcoming
+                  ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                  : "bg-[#2a2a35] text-[#7c7a76] border border-[#3a3a40]"
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${upcoming ? "bg-amber-400" : "bg-[#7c7a76]"}`}
+              />
+              {upcoming ? "Upcoming" : "Attended"}
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex flex-1 flex-col p-4 gap-2.5">
+          <CategoryBadge
+            category={
+              event.category as "Tech" | "Sports" | "Academic" | "Social"
+            }
+          />
+
+          <h3 className="font-syne text-sm font-semibold text-[#e8e6e1] leading-snug line-clamp-2 group-hover:text-amber-400 transition-colors">
+            {event.title}
+          </h3>
+
+          <div className="space-y-1 text-xs text-[#7c7a76]">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-3.5 w-3.5 text-amber-500/60 shrink-0" />
+              <span>{formatDate(event.date.toString())}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-3.5 w-3.5 text-amber-500/60 shrink-0" />
+              <span className="truncate">{event.location}</span>
+            </div>
+          </div>
+
+          {/* Receipt + price row */}
+          <div className="flex items-center justify-between pt-2 border-t border-[#2a2a35]">
+            <div className="flex items-center gap-1.5 text-xs text-[#4a4a52]">
+              <Receipt className="h-3 w-3" />
+              <span>{receiptId}</span>
+            </div>
+            <span className="font-syne text-xs font-semibold text-amber-400">
+              KES {event.price.toLocaleString()}
+            </span>
+          </div>
+
+          {/* Booked on */}
+          <p className="text-[10px] text-[#4a4a52]">
+            Booked on{" "}
+            {new Date(createdAt).toLocaleDateString("en-KE", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+
+          <div className="mt-2 flex flex-col gap-2">
+            <Link
+              href={`/event/${event.id}`}
+              className="flex items-center justify-center rounded-xl border border-[#2a2a35] hover:border-amber-500/30 bg-[#1e1e24] hover:bg-amber-500/10 px-3 py-2 text-xs font-medium text-[#e8e6e1] hover:text-amber-400 transition-all"
+            >
+              View Event Details
+            </Link>
+
+            <a
+              href={receipt}
+              download={`Receipt_${receiptId}.pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center rounded-xl border border-[#2a2a35] hover:border-amber-500/30 bg-[#1e1e24] hover:bg-amber-500/10 px-3 py-2 text-xs font-medium text-[#e8e6e1] hover:text-amber-400 transition-all"
+            >
+              Download Receipt
+            </a>
+
+            {upcoming && (
+              <button
+                onClick={() => setShowCancelModal(true)}
+                disabled={isPending}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-red-500/20 hover:border-red-500/40 bg-red-500/5 hover:bg-red-500/10 px-3 py-2 text-xs font-medium text-red-400/70 hover:text-red-400 transition-all"
+              >
+                <Ban className="h-3 w-3" />
+                {isPending ? "Cancelling..." : "Cancel Booking"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Content */}
-      <div className="flex flex-1 flex-col p-4 gap-2.5">
-        <CategoryBadge
-          category={event.category as "Tech" | "Sports" | "Academic" | "Social"}
-        />
-
-        <h3 className="font-syne text-sm font-semibold text-[#e8e6e1] leading-snug line-clamp-2 group-hover:text-amber-400 transition-colors">
-          {event.title}
-        </h3>
-
-        <div className="space-y-1 text-xs text-[#7c7a76]">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-3.5 w-3.5 text-amber-500/60 shrink-0" />
-            <span>{formatDate(event.date.toString())}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-3.5 w-3.5 text-amber-500/60 shrink-0" />
-            <span className="truncate">{event.location}</span>
-          </div>
-        </div>
-
-        {/* Receipt + price row */}
-        <div className="flex items-center justify-between pt-2 border-t border-[#2a2a35]">
-          <div className="flex items-center gap-1.5 text-xs text-[#4a4a52]">
-            <Receipt className="h-3 w-3" />
-            <span>{receiptId}</span>
-          </div>
-          <span className="font-syne text-xs font-semibold text-amber-400">
-            KES {event.price.toLocaleString()}
-          </span>
-        </div>
-
-        {/* Booked on */}
-        <p className="text-[10px] text-[#4a4a52]">
-          Booked on{" "}
-          {new Date(createdAt).toLocaleDateString("en-KE", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-        </p>
-        <div className="mt-2 flex flex-col gap-2">
-          <Link
-            href={`/event/${event.id}`}
-            className="flex items-center justify-center rounded-xl border border-[#2a2a35] hover:border-amber-500/30 bg-[#1e1e24] hover:bg-amber-500/10 px-3 py-2 text-xs font-medium text-[#e8e6e1] hover:text-amber-400 transition-all"
-          >
-            View Event Details
-          </Link>
-
-          <a
-            href={receipt}
-            download={`Receipt_${receiptId}.pdf`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center rounded-xl border border-[#2a2a35] hover:border-amber-500/30 bg-[#1e1e24] hover:bg-amber-500/10 px-3 py-2 text-xs font-medium text-[#e8e6e1] hover:text-amber-400 transition-all"
-          >
-            Download Receipt
-          </a>
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -344,8 +493,8 @@ function EmptyState() {
         No bookings yet
       </h3>
       <p className="text-sm text-[#7c7a76] max-w-xs mb-6">
-        You haven't booked any events yet. Explore what's happening
-        and secure your spot.
+        You haven't booked any events yet. Explore what's happening and secure
+        your spot.
       </p>
       <Link
         href="/"

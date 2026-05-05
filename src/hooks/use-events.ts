@@ -1,6 +1,7 @@
 import {
   addEvent,
   bookEvent,
+  cancelEvent,
   checkBookingAvailability,
   deleteEvent,
   editEvent,
@@ -102,6 +103,32 @@ export function useBookEvent(
       queryClient.invalidateQueries({ queryKey: ["getEventDetails"] });
       queryClient.invalidateQueries({
         queryKey: [eventId + "checkBookingAvailability"],
+      });
+    },
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+  return result;
+}
+
+export function useCancelEventBooking(
+  eventId: string,
+  clerkId: string,
+  bookedEventId: string,
+) {
+  const queryClient = useQueryClient();
+
+  const result = useMutation({
+    mutationFn: () => cancelEvent(eventId, clerkId, bookedEventId),
+    mutationKey: ["cancelEvent"],
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["getEventDetails"] });
+      queryClient.invalidateQueries({
+        queryKey: [eventId + "checkBookingAvailability"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["getUserProfile"],
       });
     },
     onError: (error) => {
