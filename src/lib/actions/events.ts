@@ -133,7 +133,7 @@ export async function editEvent(event: Event) {
     const eventCapacityDifference = event.capacity - existingEvent.capacity;
 
     if (eventCapacityDifference === 0) {
-      newEventRemainingCapacity = event.capacity;
+      newEventRemainingCapacity = event.remainingCapacity;
     } else if (eventCapacityDifference > 0) {
       newEventRemainingCapacity =
         existingEvent.capacity + eventCapacityDifference;
@@ -197,7 +197,7 @@ export async function deleteEvent(eventId: string) {
         clerkId: user.id,
       },
     });
-const ADMIN_EMAILS = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",") ?? [];
+    const ADMIN_EMAILS = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",") ?? [];
     if (!ADMIN_EMAILS.includes(existingUser?.email!))
       throw new Error("Unauthorized");
 
