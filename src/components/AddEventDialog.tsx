@@ -91,6 +91,12 @@ export function AddEventDialog() {
       return toast.error("Full description is required.");
     if (!form.date) return toast.error("Date is required.");
     if (!form.time) return toast.error("Start time is required.");
+    const selectedDateTime = new Date(`${form.date}T${form.time}`);
+    const now = new Date();
+
+    if (selectedDateTime < now) {
+      return toast.error("You cannot create an event in the past.");
+    }
     if (!form.location.trim()) return toast.error("Location is required.");
     if (!form.organizer.trim()) return toast.error("Organizer is required.");
     if (!imagePreview) return toast.error("Please upload an event image.");
