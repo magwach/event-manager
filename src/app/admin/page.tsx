@@ -73,7 +73,6 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
-      {/* ── Delete Confirmation Modal ─────────────────────────────────────── */}
       {pendingDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
